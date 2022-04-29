@@ -21,7 +21,7 @@ This README file was generated on April 29 2022 by Andres Martinez.
 This work was supported by the National Institutes of Environmental Health Sciences (NIEHS) grant #P42ES013661.  The funding sponsor did not have any role in study design; in collection, analysis, and/or interpretation of data; in creation of the dataset; and/or in the decision to submit this data for publication or deposit it in a repository.
 
 
-This README file describes a revised version of scripts for calculating the individual fraction of PCBs in multiwell experiments used in this paper:
+This README file describes the codes generated to analyse and map water PCB concentrations from Superfund sites used in this paper:
 
 The script is developed for the analysis and mapping of water concentrations of PCBs from Superfund sites,Project 4, Aim 3, ISRP.
 
@@ -32,7 +32,7 @@ FILE OVERVIEW
 File Name: 
 File Size: X kb
 File Format: .R
-File description: Contains the raw code for the calculation of individual PCB fractions in "R".
+File description: Contains the raw code for the analysis and mapping of water PCB concnetrations in "R".
 
 --------
 PREREQUISITES & DEPENDENCIES
