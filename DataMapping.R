@@ -1,0 +1,129 @@
+# Mapping water concentrations
+
+# Install packages
+install.packages("ggplot2")
+install.packages("devtools")
+install.packages("dplyr")
+install.packages("stringr")
+install.packages("maps")
+install.packages("mapdata")
+install.packages("ggmap")
+install.packages("usethis")
+install.packages("GISTools")
+install.packages("rgeos")
+install.packages("ggsn")
+install.packages("ggrepel")
+
+# Load libraries
+library(usethis)
+library(devtools)
+library(ggmap)
+library(maps)
+library(ggplot2)
+library(readxl)
+library(leaflet)
+library(raster)
+library(GISTools)
+library(rgeos)
+library(ggsn)
+library(ggrepel)
+
+# Read data.xlsx
+# Data in pg/L
+w <- read_excel("compiledListV02.xlsx", sheet = "Sheet1",
+                col_names = TRUE, col_types = NULL, na = "NA")
+us <- map_data("usa")
+states <- map_data("state")
+
+#creates map of US with locations
+ggplot() +
+  geom_polygon(data = us, aes(x = long, y = lat, group = group),
+               color = "black", fill = "white") +
+  coord_fixed(1.3) +
+  geom_path( data = states, aes(x = long, y = lat, group = group),
+             colour = "black") +
+  geom_point(data = w, aes(x = Long, y = Lat), color = "blue",
+             size = 1.5, shape = 21)
+
+# select only WI
+w.WI <- subset(w, w$StateSampled == "WI")
+
+# Map with ggmap
+WI.box <- make_bbox(lon = w.WI$Long, lat = w.WI$Lat, f = 0.6)
+wi.map <- get_stamenmap(bbox = WI.box, zoom = 11)
+
+# (1) Plot map
+ggmap(wi.map)
+
+# (2) Plot map + sampling locations
+ggmap(wi.map) +
+  geom_point(data = w.WI, aes(x = Long, y = Lat), shape = 21,
+  color = "red",
+  fill = "white", size = 1.75, stroke = 0.75)
+
+# Prepare congener data for plotting
+# Get coordinates per site
+LW <- subset(w.WI, w.WI$SiteSampled == 'LakeWinnebago')
+LW <- data.frame(c(LW[1,6], LW[1,7]))
+OU1 <- subset(w.WI, w.WI$SiteSampled == 'OperableUnit1')
+OU1 <- data.frame(c(OU1[1,6], OU1[1,7]))
+OU2A <- subset(w.WI, w.WI$SiteSampled == 'OperableUnit2A')
+OU2A <- data.frame(c(OU2A[1,6], OU2A[1,7]))
+OU2B <- subset(w.WI, w.WI$SiteSampled == 'OperableUnit2B')
+OU2B <- data.frame(c(OU2B[1,6], OU2B[1,7]))
+OU2C <- subset(w.WI, w.WI$SiteSampled == 'OperableUnit2C')
+OU2C <- data.frame(c(OU2C[1,6], OU2C[1,7]))
+OU3 <- subset(w.WI, w.WI$SiteSampled == 'OperableUnit3')
+OU3 <- data.frame(c(OU3[1,6], OU3[1,7]))
+wi.coord <- rbind(LW, OU1, OU2A, OU2B, OU2C, OU3)
+
+# Total PCBs
+# # remove samples (rows) with total PCBs  = 0
+w.WI.t <- w.WI[!(rowSums(w.WI[,
+                           c(12:115)],
+                         na.rm = TRUE)==0),] # sum of PCB1 to PCB209
+site.sampled <- w.WI.t$SiteSampled
+w.WI.t <- subset(w.WI.t, select = -c(ID:AroclorCongener))
+w.WI.t <- subset(w.WI.t, select = -c(AroclorA1016:AroclorA1260))
+# Get mean congener per site, excluding zeros
+tPCB <- rowSums(w.WI.t, na.rm = TRUE)
+tPCB <- data.frame(cbind(site.sampled, tPCB))
+tPCB$tPCB <- as.numeric(as.character(tPCB$tPCB))
+tPCB.mean <- aggregate(tPCB ~ site.sampled, data = tPCB, mean)
+# add coordinates
+tPCB.mean <- data.frame(c(tPCB.mean, wi.coord))
+
+# (3) Plot map + tPCB
+ggmap(wi.map) +
+  geom_point(data = tPCB.mean, aes(x = Long, y = Lat,
+                              size = tPCB), alpha = 0.5) +
+  scale_size_area(breaks = c(250, 500, 750, 1000, 1500),
+                  labels = c(250, 500, 750, 1000, 1500),
+                  name = "PCBs ng/L") +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  labs(title = "Fox River PCBs water concentration (pg/L) 2010-2018")
+
+# Congener maps
+# Select congener and remove samples with = 0 and NA for selected congener
+w.WI.2 <- subset(w.WI, w.WI$PCB1 != 0 & w.WI$PCB1 != "NA")
+# Get mean congener per site, excluding zeros
+PCB1 <- aggregate(PCB1 ~ SiteSampled, data = w.WI.2, mean)
+PCB1 <- data.frame(c(PCB1, wi.coord))
+
+# (4) Plot map + congener
+ggmap(wi.map) +
+  geom_point(data = PCB1, aes(x = Long, y = Lat,
+                              size = PCB1), alpha = 0.5) +
+  scale_size_area(breaks = c(0.1, 1, 2, 4, 6),
+                 labels = c(0.1, 1, 2, 4, 6),
+                 name = "PCB 1 ng/L") +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  labs(title = "Fox River PCB 1 water concentration (pg/L) 2010-2018")
+  #geom_label_repel(data = PCB1, aes(x = Long, y = Lat, label = SiteSampled),
+  #                 fill = "white", box.padding = unit(0.3, "lines"),
+  #                 label.padding = unit(0.15, "lines"),
+  #                 segment.color = "black", segment.size = 1)
+                   
+                   
