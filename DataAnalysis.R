@@ -1,5 +1,6 @@
-# PCB water analysis
-
+## Water PCB concentrations analysis.
+# Data were obtained from EPA and contractors from PCB Superfund
+# sites in USA
 
 # Install packages
 install.packages("readxl")
@@ -7,6 +8,7 @@ install.packages("ggpubr")
 install.packages("ggpmisc")
 install.packages("tidyverse")
 install.packages("reshape2")
+install.packages("ggplot2")
 
 # Load libraries
 library(readxl)
@@ -23,7 +25,6 @@ library(stringr)
 # Data in pg/L
 w <- read_excel("compiledListV02.xlsx", sheet = "Sheet1",
                   col_names = TRUE, col_types = NULL, na = "NA")
-head(w)
 
 # remove unnecessary columns
 w.1 <- subset(w, select = -c(ID:AroclorCongener))
@@ -31,7 +32,7 @@ w.1 <- subset(w.1, select = -c(AroclorA1016:AroclorA1260))
 #w.1[w.1 == 0] <- NA
 
 # remove samples (rows) with total PCBs  = 0
-w.2 <- w[!(rowSums(w[, c(12:115)], na.rm = TRUE)==0),] # sum of PCB1 to PCB209
+w.2 <- w[!(rowSums(w[, c(12:115)], na.rm = TRUE)==0),]
 w.2 <- subset(w.2, select = -c(ID:AroclorCongener))
 w.2 <- subset(w.2, select = -c(AroclorA1016:AroclorA1260))
 
@@ -55,8 +56,8 @@ ggplot(w.2, aes(x = "", y = rowSums(w.2, na.rm = T))) +
               shape = 1, col = "black") +
   annotation_logticks(sides = "l")
 
-# Congener
-# select PCB
+# Congeners
+# Select PCB
 # Remove samples with = 0 and NA
 
 w.3 <- subset(w, w$PCB1 != 0 & w$PCB1 != "NA")
