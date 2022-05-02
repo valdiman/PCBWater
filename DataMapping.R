@@ -1,4 +1,6 @@
-# Mapping water concentrations
+## Water PCB concentrations mapping.
+# Data were obtained from EPA and contractors from PCB Superfund
+# sites in USA
 
 # Install packages
 install.packages("ggplot2")
@@ -15,12 +17,12 @@ install.packages("ggsn")
 install.packages("ggrepel")
 
 # Load libraries
+library(dplyr)
 library(usethis)
 library(devtools)
 library(ggmap)
 library(maps)
 library(ggplot2)
-library(readxl)
 library(leaflet)
 library(raster)
 library(GISTools)
@@ -28,10 +30,8 @@ library(rgeos)
 library(ggsn)
 library(ggrepel)
 
-# Read data.xlsx
 # Data in pg/L
-w <- read_excel("compiledListV02.xlsx", sheet = "Sheet1",
-                col_names = TRUE, col_types = NULL, na = "NA")
+c <- read.csv("curatedData20220317.csv")
 us <- map_data("usa")
 states <- map_data("state")
 
@@ -42,8 +42,14 @@ ggplot() +
   coord_fixed(1.3) +
   geom_path( data = states, aes(x = long, y = lat, group = group),
              colour = "black") +
-  geom_point(data = w, aes(x = Long, y = Lat), color = "blue",
+  geom_point(data = c, aes(x = Longitude, y = Latitude), color = "blue",
              size = 1.5, shape = 21)
+
+# Find number of samples per state
+
+n.sample <- select(c, c(StateSampled, Latitude, Longitude))
+
+
 
 # select only WI
 w.WI <- subset(w, w$StateSampled == "WI")
