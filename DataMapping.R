@@ -15,6 +15,7 @@ install.packages("GISTools")
 install.packages("rgeos")
 install.packages("ggsn")
 install.packages("ggrepel")
+install.packages("ggpp")
 
 # Load libraries
 library(dplyr)
@@ -30,12 +31,26 @@ library(rgeos)
 library(ggsn)
 library(ggrepel)
 library(reshape2)
+library(ggpmisc)
 
 # Data in pg/L
 d.cong <- read.csv("WaterDataCongener050322.csv")
 d.aroc <- read.csv("WaterDataCongenerAroclor050322.csv")
 us <- map_data("usa")
 states <- map_data("state")
+
+# Find number of samples per state to be included as table in maps
+d.cong.n <- d.cong %>%
+  group_by(StateSampled) %>%
+  summarise(n = n())
+
+colnames(d.cong.n) <- c("State", "# samples")
+
+d.aroc.n <- d.aroc %>%
+  group_by(StateSampled) %>%
+  summarise(n = n())
+
+colnames(d.aroc.n) <- c("State", "# samples")
 
 # Creates map of US with locations from congener data
 ggplot() +
@@ -47,7 +62,8 @@ ggplot() +
              colour = "white") +
   geom_polygon(color = "black", fill = NA) +
   geom_point(data = d.cong, aes(x = Longitude, y = Latitude), color = "black",
-             size = 1.2, shape = 20)
+             size = 1.2, shape = 20) +
+  annotate(geom = 'table', x = -57, y = 28, label = list(d.cong.n), size = 1.5)
 
 # Creates map of US with locations from Aroclor data
 ggplot() +
@@ -59,24 +75,8 @@ ggplot() +
             colour = "white") +
   geom_polygon(color = "black", fill = NA) +
   geom_point(data = d.aroc, aes(x = Longitude, y = Latitude), color = "black",
-             size = 1.2, shape = 20)
-
-# Find number of samples per state
-d.cong.n <- d.cong %>%
-  group_by(StateSampled) %>%
-  summarise(n = n())
-d.aroc.n <- d.aroc %>%
-  group_by(StateSampled) %>%
-  summarise(n = n())
-
-d.cong.1 <- d.cong[c("StateSampled", "Latitude", "Longitude")]
-d.aroc.1 <- d.aroc[c("StateSampled", "Latitude", "Longitude")]
-# Add number of samples per state
-d.cong.1 <- dplyr::add_count(d.cong.1, StateSampled)
-d.aroc.1 <- dplyr::add_count(d.aroc.1, StateSampled)
-
-
-
+             size = 1.2, shape = 20) +
+  annotate(geom = 'table', x = -57, y = 27, label = list(d.aroc.n), size = 1.5)
 
 # select only WI
 w.WI <- subset(w, w$StateSampled == "WI")
