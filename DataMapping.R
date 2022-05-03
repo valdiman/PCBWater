@@ -62,11 +62,21 @@ ggplot() +
              size = 1.2, shape = 20)
 
 # Find number of samples per state
+d.cong.n <- d.cong %>%
+  group_by(StateSampled) %>%
+  summarise(n = n())
+d.aroc.n <- d.aroc %>%
+  group_by(StateSampled) %>%
+  summarise(n = n())
+
 d.cong.1 <- d.cong[c("StateSampled", "Latitude", "Longitude")]
+d.aroc.1 <- d.aroc[c("StateSampled", "Latitude", "Longitude")]
 # Add number of samples per state
 d.cong.1 <- dplyr::add_count(d.cong.1, StateSampled)
+d.aroc.1 <- dplyr::add_count(d.aroc.1, StateSampled)
 
-head(c.1)
+
+
 
 # select only WI
 w.WI <- subset(w, w$StateSampled == "WI")
