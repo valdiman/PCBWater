@@ -3,7 +3,6 @@
 # sites in USA
 
 # Install packages
-install.packages("readxl")
 install.packages("ggpubr")
 install.packages("ggpmisc")
 install.packages("tidyverse")
@@ -11,7 +10,6 @@ install.packages("reshape2")
 install.packages("ggplot2")
 
 # Load libraries
-library(readxl)
 library(ggplot2)
 library(ggpubr)
 library(ggpmisc)
@@ -21,23 +19,19 @@ library(tidyverse)
 library(reshape2)
 library(stringr)
 
-# Read data.xlsx
 # Data in pg/L
-w <- read_excel("compiledListV02.xlsx", sheet = "Sheet1",
-                  col_names = TRUE, col_types = NULL, na = "NA")
+d.cong <- read.csv("WaterDataCongener050322.csv")
+d.aroc <- read.csv("WaterDataCongenerAroclor050322.csv")
 
-# remove unnecessary columns
-w.1 <- subset(w, select = -c(ID:AroclorCongener))
-w.1 <- subset(w.1, select = -c(AroclorA1016:AroclorA1260))
-#w.1[w.1 == 0] <- NA
+# Remove samples (rows) with total PCBs  = 0
+d.cong.2 <- d.cong[!(rowSums(d.cong[, c(12:115)], na.rm = TRUE)==0),]
+# Remove metadata
+d.cong.2 <- subset(d.cong.2, select = -c(ID:AroclorCongener))
+# Remove Aroclor data
+d.cong.2 <- subset(d.cong.2, select = -c(A1016:A1260))
 
-# remove samples (rows) with total PCBs  = 0
-w.2 <- w[!(rowSums(w[, c(12:115)], na.rm = TRUE)==0),]
-w.2 <- subset(w.2, select = -c(ID:AroclorCongener))
-w.2 <- subset(w.2, select = -c(AroclorA1016:AroclorA1260))
-
-# Total PCBs
-ggplot(w.2, aes(x = "", y = rowSums(w.2, na.rm = T))) + 
+# Total PCBs in 1 box plot
+ggplot(d.cong.2, aes(x = "", y = rowSums(d.cong.2, na.rm = T))) + 
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) +
   geom_boxplot(width = 0.7, outlier.colour = "white") +
