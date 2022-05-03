@@ -29,27 +29,44 @@ library(GISTools)
 library(rgeos)
 library(ggsn)
 library(ggrepel)
+library(reshape2)
 
 # Data in pg/L
-c <- read.csv("curatedData20220317.csv")
+d.cong <- read.csv("WaterDataCongener050322.csv")
+d.aroc <- read.csv("WaterDataCongenerAroclor050322.csv")
 us <- map_data("usa")
 states <- map_data("state")
 
-#creates map of US with locations
+# Creates map of US with locations from congener data
 ggplot() +
   geom_polygon(data = us, aes(x = long, y = lat, group = group),
-               color = "black", fill = "white") +
+               color = "black", fill = "lightblue") +
   coord_fixed(1.3) +
-  geom_path( data = states, aes(x = long, y = lat, group = group),
-             colour = "black") +
-  geom_point(data = c, aes(x = Longitude, y = Latitude), color = "blue",
-             size = 1.5, shape = 21)
+  theme_nothing() +
+  geom_path(data = states, aes(x = long, y = lat, group = group),
+             colour = "white") +
+  geom_polygon(color = "black", fill = NA) +
+  geom_point(data = d.cong, aes(x = Longitude, y = Latitude), color = "black",
+             size = 1.2, shape = 20)
+
+# Creates map of US with locations from Aroclor data
+ggplot() +
+  geom_polygon(data = us, aes(x = long, y = lat, group = group),
+               color = "black", fill = "lightblue") +
+  coord_fixed(1.3) +
+  theme_nothing() +
+  geom_path(data = states, aes(x = long, y = lat, group = group),
+            colour = "white") +
+  geom_polygon(color = "black", fill = NA) +
+  geom_point(data = d.aroc, aes(x = Longitude, y = Latitude), color = "black",
+             size = 1.2, shape = 20)
 
 # Find number of samples per state
+d.cong.1 <- d.cong[c("StateSampled", "Latitude", "Longitude")]
+# Add number of samples per state
+d.cong.1 <- dplyr::add_count(d.cong.1, StateSampled)
 
-n.sample <- select(c, c(StateSampled, Latitude, Longitude))
-
-
+head(c.1)
 
 # select only WI
 w.WI <- subset(w, w$StateSampled == "WI")
