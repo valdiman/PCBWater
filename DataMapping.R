@@ -63,7 +63,7 @@ ggplot() +
   geom_polygon(color = "black", fill = NA) +
   geom_point(data = d.cong, aes(x = Longitude, y = Latitude), color = "black",
              size = 1.2, shape = 20) +
-  annotate(geom = 'table', x = -57, y = 28, label = list(d.cong.n), size = 1.5)
+  annotate(geom = 'table', x = -57, y = 28, label = list(d.cong.n), size = 1.5) # add table with info
 
 # Creates map of US with locations from Aroclor data
 ggplot() +
@@ -76,7 +76,7 @@ ggplot() +
   geom_polygon(color = "black", fill = NA) +
   geom_point(data = d.aroc, aes(x = Longitude, y = Latitude), color = "black",
              size = 1.2, shape = 20) +
-  annotate(geom = 'table', x = -57, y = 27, label = list(d.aroc.n), size = 1.5)
+  annotate(geom = 'table', x = -57, y = 27, label = list(d.aroc.n), size = 1.5) # add table with info
 
 # select only WI
 w.WI <- subset(w, w$StateSampled == "WI")
