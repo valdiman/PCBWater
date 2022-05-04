@@ -70,9 +70,16 @@ d.cong.freq <- cbind(congener, d.cong.freq$PCB.frequency)
 colnames(d.cong.freq) <- c("congener", "PCB.frequency")
 d.cong.freq <- data.frame(d.cong.freq)
 d.cong.freq$congener <- as.character(d.cong.freq$congener)
+
+
+d.cong.freq$congener <- str_replace(d.cong.freq$congener,".","+")
+
 d.cong.freq$PCB.frequency <- as.numeric(as.character(d.cong.freq$PCB.frequency))
 d.cong.freq$congener <- factor(d.cong.freq$congener,
                             levels = unique(d.cong.freq$congener))
+
+d.cong.freq$congener <- replace(d.cong.freq$congener,
+                                d.cong.freq$congener == ".", "+")
 
 # Frequency detection plot
 ggplot(d.cong.freq, aes(x = congener, y = PCB.frequency)) +
@@ -108,7 +115,7 @@ ggplot(d.cong.2, aes(x = "", y = rowSums(d.cong.2, na.rm = T))) +
   geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
   annotation_logticks(sides = "l")
 
-# Congeners
+# Individual congeners
 # Remove samples with = 0 and NA
 d.cong.PCB5.8 <- subset(d.cong,
                         d.cong$PCB5.8 != 0 & d.cong$PCB5.8 != "NA")
