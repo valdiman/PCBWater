@@ -87,25 +87,27 @@ ggplot(d.cong.2, aes(x = "", y = rowSums(d.cong.2, na.rm = T))) +
 # Select PCB
 # Remove samples with = 0 and NA
 
-w.3 <- subset(w, w$PCB1 != 0 & w$PCB1 != "NA")
+d.cong.PCB5.8 <- subset(d.cong,
+                        d.cong$PCB5.8 != 0 & d.cong$PCB5.8 != "NA")
 
-ggplot(w.3, aes(x = "", y = PCB3)) + 
+ggplot(d.cong.PCB5.8, aes(x = "", y = PCB5.8)) + 
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) +
-  geom_boxplot(width = 0.7, outlier.colour = "white") +
   theme_classic() +
   theme(aspect.ratio = 14/2) +
-  xlab(expression(bold("PCB 1")))+
-  ylab(expression(bold("Water Concentration (pg/L)"))) +
+  xlab(expression(bold("PCBs 5+8 (n = 1434")))+
+  ylab(expression(bold("Water Concentration 1990 - 2019 (pg/L)"))) +
   theme(axis.text.y = element_text(face = "bold", size = 12),
         axis.title.y = element_text(face = "bold", size = 12)) +
   theme(axis.text.x = element_text(face = "bold", size = 10),
         axis.title.x = element_text(face = "bold", size = 10,
-                                    angle = 60, hjust = 0.5)) +
+                                    angle = 45, hjust = 1.8,
+                                    vjust = 2)) +
   theme(axis.ticks = element_line(size = 0.8, color = "black"), 
         axis.ticks.length = unit(0.2, "cm")) +
-  geom_jitter(position = position_jitter(0.3), cex = 1.8,
-              shape = 1, col = "black") +
+  geom_jitter(position = position_jitter(0.3), cex = 1.2,
+              shape = 1, col = "lightblue") +
+  geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
   annotation_logticks(sides = "l")
 
 #plots
