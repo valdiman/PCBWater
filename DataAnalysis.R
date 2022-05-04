@@ -54,13 +54,38 @@ ggplot(d.aroc.2, aes(x = "", y = rowSums(d.aroc.2, na.rm = T))) +
   geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
   annotation_logticks(sides = "l")
 
-# Box plots with congener dataset
+# Prepare data for plots with congener dataset
 # Remove samples (rows) with total PCBs  = 0
 d.cong.2 <- d.cong[!(rowSums(d.cong[, c(12:115)], na.rm = TRUE)==0),]
 # Remove metadata
 d.cong.2 <- subset(d.cong.2, select = -c(ID:AroclorCongener))
 # Remove Aroclor data
 d.cong.2 <- subset(d.cong.2, select = -c(A1016:A1260))
+# Create a frequency detection plot
+d.cong.freq <- colSums(! is.na(d.cong.2) & (d.cong.2 !=0))/nrow(d.cong.2)
+d.cong.freq <- data.frame(d.cong.freq)
+colnames(d.cong.freq) <- c("PCB.frequency")
+congener <- row.names(d.cong.freq)
+d.cong.freq <- cbind(congener, d.cong.freq$PCB.frequency)
+colnames(d.cong.freq) <- c("congener", "PCB.frequency")
+d.cong.freq <- data.frame(d.cong.freq)
+d.cong.freq$congener <- as.character(d.cong.freq$congener)
+d.cong.freq$PCB.frequency <- as.numeric(as.character(d.cong.freq$PCB.frequency))
+d.cong.freq$congener <- factor(d.cong.freq$congener,
+                            levels = unique(d.cong.freq$congener))
+
+# Frequency detection plot
+ggplot(d.cong.freq, aes(x = congener, y = PCB.frequency)) +
+  geom_bar(stat = "identity", fill = "black") +
+  xlab("") +
+  theme_bw() +
+  theme(aspect.ratio = 4/12) +
+  ylab(expression(bold("Frequnecy detection"))) +
+  theme(axis.text.y = element_text(face = "bold", size = 9),
+        axis.title.y = element_text(face = "bold", size = 10)) +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
 
 # Total PCBs in 1 box plot
 ggplot(d.cong.2, aes(x = "", y = rowSums(d.cong.2, na.rm = T))) + 
@@ -84,18 +109,20 @@ ggplot(d.cong.2, aes(x = "", y = rowSums(d.cong.2, na.rm = T))) +
   annotation_logticks(sides = "l")
 
 # Congeners
-# Select PCB
 # Remove samples with = 0 and NA
-
 d.cong.PCB5.8 <- subset(d.cong,
                         d.cong$PCB5.8 != 0 & d.cong$PCB5.8 != "NA")
+
+
+
+d.cong.3 <- colMeans(d.cong.2 > 0, na.rm = TRUE)
 
 ggplot(d.cong.PCB5.8, aes(x = "", y = PCB5.8)) + 
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) +
   theme_classic() +
   theme(aspect.ratio = 14/2) +
-  xlab(expression(bold("PCBs 5+8 (n = 1434")))+
+  xlab(expression(bold("PCBs 5+8 (n = 1434)")))+
   ylab(expression(bold("Water Concentration 1990 - 2019 (pg/L)"))) +
   theme(axis.text.y = element_text(face = "bold", size = 12),
         axis.title.y = element_text(face = "bold", size = 12)) +
