@@ -13,7 +13,7 @@ install.packages("ggplot2")
 library(ggplot2)
 library(ggpubr)
 library(ggpmisc)
-library(scales)
+library(scales) # function trans_breaks
 library(gridExtra)
 library(tidyverse)
 library(reshape2)
@@ -23,6 +23,38 @@ library(stringr)
 d.cong <- read.csv("WaterDataCongener050322.csv")
 d.aroc <- read.csv("WaterDataCongenerAroclor050322.csv")
 
+# Summary plots -----------------------------------------------------------
+
+# Box plots with Aroclor dataset
+# Remove samples (rows) with total PCBs  = 0
+d.aroc.2 <- d.aroc[!(rowSums(d.aroc[, c(12:115)], na.rm = TRUE)==0),]
+# Remove metadata
+d.aroc.2 <- subset(d.aroc.2, select = -c(ID:AroclorCongener))
+# Remove Aroclor data
+d.aroc.2 <- subset(d.aroc.2, select = -c(A1016:A1260))
+
+# Total PCBs in 1 box plot
+ggplot(d.aroc.2, aes(x = "", y = rowSums(d.aroc.2, na.rm = T))) + 
+  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                labels = trans_format("log10", math_format(10^.x))) +
+  theme_classic() +
+  theme(aspect.ratio = 14/2) +
+  xlab(expression(bold(Sigma*"PCB (n = 45,146)")))+
+  ylab(expression(bold("Water Concentration 1990 - 2020 (pg/L)"))) +
+  theme(axis.text.y = element_text(face = "bold", size = 12),
+        axis.title.y = element_text(face = "bold", size = 12)) +
+  theme(axis.text.x = element_text(face = "bold", size = 10),
+        axis.title.x = element_text(face = "bold", size = 10,
+                                    angle = 45, hjust = 1.8,
+                                    vjust = 2)) +
+  theme(axis.ticks = element_line(size = 0.8, color = "black"), 
+        axis.ticks.length = unit(0.2, "cm")) +
+  geom_jitter(position = position_jitter(0.3), cex = 1.2,
+              shape = 1, col = "lightblue") +
+  geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
+  annotation_logticks(sides = "l")
+
+# Box plots with congener dataset
 # Remove samples (rows) with total PCBs  = 0
 d.cong.2 <- d.cong[!(rowSums(d.cong[, c(12:115)], na.rm = TRUE)==0),]
 # Remove metadata
@@ -34,20 +66,21 @@ d.cong.2 <- subset(d.cong.2, select = -c(A1016:A1260))
 ggplot(d.cong.2, aes(x = "", y = rowSums(d.cong.2, na.rm = T))) + 
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) +
-  geom_boxplot(width = 0.7, outlier.colour = "white") +
   theme_classic() +
   theme(aspect.ratio = 14/2) +
-  xlab(expression(bold(Sigma*"PCB")))+
-  ylab(expression(bold("Water Concentration (pg/L)"))) +
+  xlab(expression(bold(Sigma*"PCB (n = 2093)")))+
+  ylab(expression(bold("Water Concentration 1990 - 2019 (pg/L)"))) +
   theme(axis.text.y = element_text(face = "bold", size = 12),
         axis.title.y = element_text(face = "bold", size = 12)) +
   theme(axis.text.x = element_text(face = "bold", size = 10),
         axis.title.x = element_text(face = "bold", size = 10,
-                                    angle = 60, hjust = 0.5)) +
+                                    angle = 45, hjust = 1.8,
+                                    vjust = 2)) +
   theme(axis.ticks = element_line(size = 0.8, color = "black"), 
         axis.ticks.length = unit(0.2, "cm")) +
-  geom_jitter(position = position_jitter(0.3), cex = 1.8,
-              shape = 1, col = "black") +
+  geom_jitter(position = position_jitter(0.3), cex = 1.2,
+              shape = 1, col = "lightblue") +
+  geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
   annotation_logticks(sides = "l")
 
 # Congeners
