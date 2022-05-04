@@ -21,7 +21,7 @@ install.packages("ggpp")
 library(dplyr)
 library(usethis)
 library(devtools)
-library(ggmap)
+library(ggmap) # function map_data
 library(maps)
 library(ggplot2)
 library(leaflet)
@@ -39,17 +39,17 @@ d.aroc <- read.csv("WaterDataCongenerAroclor050322.csv")
 us <- map_data("usa")
 states <- map_data("state")
 
+# Map locations -----------------------------------------------------------
+
 # Find number of samples per state to be included as table in maps
 d.cong.n <- d.cong %>%
   group_by(StateSampled) %>%
   summarise(n = n())
-
 colnames(d.cong.n) <- c("State", "# samples")
 
 d.aroc.n <- d.aroc %>%
   group_by(StateSampled) %>%
   summarise(n = n())
-
 colnames(d.aroc.n) <- c("State", "# samples")
 
 # Creates map of US with locations from congener data
@@ -77,6 +77,52 @@ ggplot() +
   geom_point(data = d.aroc, aes(x = Longitude, y = Latitude), color = "black",
              size = 1.2, shape = 20) +
   annotate(geom = 'table', x = -57, y = 27, label = list(d.aroc.n), size = 1.5) # add table with info
+
+
+# Map total PCB concentrations --------------------------------------------
+# Determine a time range (e.g., 2010 - 2019) and few locations
+
+# Prepare data
+# (i) Remove samples (rows) with total PCBs  = 0
+d.cong.2 <- d.cong[!(rowSums(d.cong[, c(12:115)], na.rm = TRUE)==0),]
+# (ii) Remove metadata
+d.cong.2 <- subset(d.cong.2, select = -c(ID:AroclorCongener))
+# (iii) Remove Aroclor data
+d.cong.2 <- subset(d.cong.2, select = -c(A1016:A1260))
+# (iv) Get 
+
+# Map with ggmap
+WI.box <- make_bbox(lon = w.WI$Long, lat = w.WI$Lat, f = 0.6)
+wi.map <- get_stamenmap(bbox = WI.box, zoom = 11)
+
+
+# Remove samples (rows) with total PCBs  = 0
+w.WI.t <- w.WI[!(rowSums(w.WI[,
+                              c(12:115)],
+                         na.rm = TRUE)==0),] # sum of PCB1 to PCB209
+site.sampled <- w.WI.t$SiteSampled
+w.WI.t <- subset(w.WI.t, select = -c(ID:AroclorCongener))
+w.WI.t <- subset(w.WI.t, select = -c(AroclorA1016:AroclorA1260))
+# Get mean congener per site, excluding zeros
+tPCB <- rowSums(w.WI.t, na.rm = TRUE)
+tPCB <- data.frame(cbind(site.sampled, tPCB))
+tPCB$tPCB <- as.numeric(as.character(tPCB$tPCB))
+tPCB.mean <- aggregate(tPCB ~ site.sampled, data = tPCB, mean)
+# add coordinates
+tPCB.mean <- data.frame(c(tPCB.mean, wi.coord))
+
+# (3) Plot map + tPCB
+ggmap(wi.map) +
+  geom_point(data = tPCB.mean, aes(x = Long, y = Lat,
+                                   size = tPCB), alpha = 0.5) +
+  scale_size_area(breaks = c(250, 500, 750, 1000, 1500),
+                  labels = c(250, 500, 750, 1000, 1500),
+                  name = "PCBs ng/L") +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  labs(title = "Fox River PCBs water concentration (pg/L) 2010-2018")
+
+
 
 # select only WI
 w.WI <- subset(w, w$StateSampled == "WI")
