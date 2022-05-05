@@ -70,16 +70,10 @@ d.cong.freq <- cbind(congener, d.cong.freq$PCB.frequency)
 colnames(d.cong.freq) <- c("congener", "PCB.frequency")
 d.cong.freq <- data.frame(d.cong.freq)
 d.cong.freq$congener <- as.character(d.cong.freq$congener)
-
-
-d.cong.freq$congener <- str_replace(d.cong.freq$congener,".","+")
-
+d.cong.freq$congener <- gsub('\\.', '+', d.cong.freq$congener) # replace dot for +
 d.cong.freq$PCB.frequency <- as.numeric(as.character(d.cong.freq$PCB.frequency))
 d.cong.freq$congener <- factor(d.cong.freq$congener,
                             levels = unique(d.cong.freq$congener))
-
-d.cong.freq$congener <- replace(d.cong.freq$congener,
-                                d.cong.freq$congener == ".", "+")
 
 # Frequency detection plot
 ggplot(d.cong.freq, aes(x = congener, y = PCB.frequency)) +
