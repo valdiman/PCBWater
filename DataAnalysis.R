@@ -76,17 +76,17 @@ d.cong.freq$congener <- factor(d.cong.freq$congener,
                             levels = unique(d.cong.freq$congener))
 
 # Frequency detection plot
-ggplot(d.cong.freq, aes(x = congener, y = PCB.frequency)) +
-  geom_bar(stat = "identity", fill = "black") +
-  xlab("") +
+ggplot(d.cong.freq, aes(x = PCB.frequency, y = congener)) +
+  geom_bar(stat = "identity", fill = "lightblue") +
+  ylab("") +
   theme_bw() +
-  theme(aspect.ratio = 4/12) +
-  ylab(expression(bold("Frequnecy detection"))) +
-  theme(axis.text.y = element_text(face = "bold", size = 9),
-        axis.title.y = element_text(face = "bold", size = 10)) +
-  theme(axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank())
+  xlim(c(0,1)) +
+  theme(aspect.ratio = 20/5) +
+  xlab(expression(bold("Frequency detection"))) +
+  theme(axis.text.x = element_text(face = "bold", size = 9),
+        axis.title.x = element_text(face = "bold", size = 10)) +
+  theme(axis.text.y = element_text(face = "bold", size = 5))
+
 
 # Total PCBs in 1 box plot
 ggplot(d.cong.2, aes(x = "", y = rowSums(d.cong.2, na.rm = T))) + 
