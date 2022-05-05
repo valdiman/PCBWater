@@ -87,7 +87,6 @@ ggplot(d.cong.freq, aes(x = PCB.frequency, y = congener)) +
         axis.title.x = element_text(face = "bold", size = 10)) +
   theme(axis.text.y = element_text(face = "bold", size = 5))
 
-
 # Total PCBs in 1 box plot
 ggplot(d.cong.2, aes(x = "", y = rowSums(d.cong.2, na.rm = T))) + 
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
@@ -111,26 +110,22 @@ ggplot(d.cong.2, aes(x = "", y = rowSums(d.cong.2, na.rm = T))) +
 
 # Individual congeners
 # Remove samples with = 0 and NA
-d.cong.PCB5.8 <- subset(d.cong,
-                        d.cong$PCB5.8 != 0 & d.cong$PCB5.8 != "NA")
+d.cong.PCB4.10 <- subset(d.cong,
+                        d.cong$PCB4.10 != 0 & d.cong$PCB4.10 != "NA")
 
-
-
-d.cong.3 <- colMeans(d.cong.2 > 0, na.rm = TRUE)
-
-ggplot(d.cong.PCB5.8, aes(x = "", y = PCB5.8)) + 
+ggplot(d.cong.PCB4.10, aes(x = "", y = PCB4.10)) + 
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) +
   theme_classic() +
   theme(aspect.ratio = 14/2) +
-  xlab(expression(bold("PCBs 5+8 (n = 1434)")))+
+  xlab(expression(bold("PCBs 4+10 (n = 1604)")))+
   ylab(expression(bold("Water Concentration 1990 - 2019 (pg/L)"))) +
   theme(axis.text.y = element_text(face = "bold", size = 12),
         axis.title.y = element_text(face = "bold", size = 12)) +
   theme(axis.text.x = element_text(face = "bold", size = 10),
         axis.title.x = element_text(face = "bold", size = 10,
-                                    angle = 45, hjust = 1.8,
-                                    vjust = 2)) +
+                                    angle = 45, hjust = 1.75,
+                                    vjust = 1.95)) +
   theme(axis.ticks = element_line(size = 0.8, color = "black"), 
         axis.ticks.length = unit(0.2, "cm")) +
   geom_jitter(position = position_jitter(0.3), cex = 1.2,
