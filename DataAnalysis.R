@@ -61,6 +61,9 @@ d.cong.2 <- d.cong[!(rowSums(d.cong[, c(12:115)], na.rm = TRUE)==0),]
 d.cong.2 <- subset(d.cong.2, select = -c(ID:AroclorCongener))
 # Remove Aroclor data
 d.cong.2 <- subset(d.cong.2, select = -c(A1016:A1260))
+d.cong.2 <- gsub('\\.', '+', d.cong.2$congener) # replace dot for +
+
+
 # Create a frequency detection plot
 d.cong.freq <- colSums(! is.na(d.cong.2) & (d.cong.2 !=0))/nrow(d.cong.2)
 d.cong.freq <- data.frame(d.cong.freq)
@@ -115,6 +118,33 @@ ggplot(d.cong.2, aes(x = "", y = rowSums(d.cong.2, na.rm = T))) +
   annotation_logticks(sides = "l")
 
 # Individual congeners
+# Individual PCB boxplot
+# need to change dot to plus ni congeners
+
+ggplot(stack(d.cong.2), aes(x = ind, y = values)) +
+  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                labels = trans_format("log10", math_format(10^.x))) +
+  geom_boxplot(width = 0.6, outlier.colour = "black",
+               outlier.shape = 1) +
+  theme_bw() +
+  theme(aspect.ratio = 35/135) +
+  xlab(expression("")) +
+  ylab(expression(bold("PCB congener concentration (pg/L)"))) +
+  theme(axis.text.y = element_text(face = "bold", size = 10,
+                                   color = "black"),
+        axis.title.y = element_text(face = "bold", size = 10,
+                                    color = "black")) +
+  theme(axis.text.x = element_text(face = "bold", size = 5,
+                                   angle = 60, hjust = 1,
+                                   color = "black"),
+        axis.title.x = element_text(face = "bold", size = 8)) +
+  theme(axis.ticks = element_line(size = 0.6, color = "black"), 
+        axis.ticks.length = unit(0.2, "cm")) +
+  annotation_logticks(sides = "l",
+                      short = unit(0.5, "mm"),
+                      mid = unit(1.5, "mm"),
+                      long = unit(2, "mm"))
+
 # Remove samples with = 0 and NA
 d.cong.PCB4.10 <- subset(d.cong.2,
                          d.cong.2$PCB4.10 != 0 & d.cong.2$PCB4.10 != "NA")
