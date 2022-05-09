@@ -75,6 +75,9 @@ d.cong.freq$PCB.frequency <- as.numeric(as.character(d.cong.freq$PCB.frequency))
 d.cong.freq$congener <- factor(d.cong.freq$congener,
                             levels = unique(d.cong.freq$congener))
 
+# Summary statistic of frequency of detection
+summary(d.cong.freq$PCB.frequency)
+
 # Frequency detection plot
 ggplot(d.cong.freq, aes(x = 100*PCB.frequency, y = congener)) +
   geom_bar(stat = "identity", fill = "lightblue") +
@@ -86,6 +89,9 @@ ggplot(d.cong.freq, aes(x = 100*PCB.frequency, y = congener)) +
   theme(axis.text.x = element_text(face = "bold", size = 9),
         axis.title.x = element_text(face = "bold", size = 10)) +
   theme(axis.text.y = element_text(face = "bold", size = 5))
+
+# Summary statistic of total PCBs
+summary(rowSums(d.cong.2, na.rm = T))
 
 # Total PCBs in 1 box plot
 ggplot(d.cong.2, aes(x = "", y = rowSums(d.cong.2, na.rm = T))) + 
@@ -110,8 +116,14 @@ ggplot(d.cong.2, aes(x = "", y = rowSums(d.cong.2, na.rm = T))) +
 
 # Individual congeners
 # Remove samples with = 0 and NA
-d.cong.PCB4.10 <- subset(d.cong,
-                        d.cong$PCB4.10 != 0 & d.cong$PCB4.10 != "NA")
+d.cong.PCB4.10 <- subset(d.cong.2,
+                         d.cong.2$PCB4.10 != 0 & d.cong.2$PCB4.10 != "NA")
+
+# Summary statistic of individual congeners
+summary(d.cong.PCB4.10$PCB4.10, na.rm = T)
+summary(d.cong.2, na.rm = T)
+
+
 
 ggplot(d.cong.PCB4.10, aes(x = "", y = PCB4.10)) + 
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
