@@ -76,13 +76,13 @@ d.cong.freq$congener <- factor(d.cong.freq$congener,
                             levels = unique(d.cong.freq$congener))
 
 # Frequency detection plot
-ggplot(d.cong.freq, aes(x = PCB.frequency, y = congener)) +
+ggplot(d.cong.freq, aes(x = 100*PCB.frequency, y = congener)) +
   geom_bar(stat = "identity", fill = "lightblue") +
   ylab("") +
   theme_bw() +
-  xlim(c(0,1)) +
+  xlim(c(0,100)) +
   theme(aspect.ratio = 20/5) +
-  xlab(expression(bold("Frequency detection"))) +
+  xlab(expression(bold("Frequency detection (%)"))) +
   theme(axis.text.x = element_text(face = "bold", size = 9),
         axis.title.x = element_text(face = "bold", size = 10)) +
   theme(axis.text.y = element_text(face = "bold", size = 5))
