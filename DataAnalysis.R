@@ -73,7 +73,7 @@ d.cong.freq$congener <- as.character(d.cong.freq$congener)
 d.cong.freq$congener <- gsub('\\.', '+', d.cong.freq$congener) # replace dot for +
 d.cong.freq$PCB.frequency <- as.numeric(as.character(d.cong.freq$PCB.frequency))
 d.cong.freq$congener <- factor(d.cong.freq$congener,
-                            levels = unique(d.cong.freq$congener))
+                            levels = rev(d.cong.freq$congener)) # change the order to be plotted.
 
 # Summary statistic of frequency of detection
 summary(d.cong.freq$PCB.frequency)
@@ -121,7 +121,7 @@ d.cong.PCB4.10 <- subset(d.cong.2,
 
 # Summary statistic of individual congeners
 summary(d.cong.PCB4.10$PCB4.10, na.rm = T)
-summary(d.cong.2, na.rm = T)
+summary(d.cong.2, na.rm = T, zero = T)
 
 
 
