@@ -8,6 +8,7 @@ install.packages("ggpmisc")
 install.packages("tidyverse")
 install.packages("reshape2")
 install.packages("ggplot2")
+install.packages("anytime")
 
 # Load libraries
 library(ggplot2)
@@ -18,6 +19,7 @@ library(gridExtra)
 library(tidyverse)
 library(reshape2)
 library(stringr)
+library(anytime) # change factor to date
 
 # Data in pg/L
 d.cong <- read.csv("WaterDataCongener050322.csv")
@@ -127,20 +129,20 @@ ggplot(d.cong, aes(x = factor(StateSampled, levels = sites),
                 labels = trans_format("log10", math_format(10^.x))) +
   theme_bw() +
   xlab(expression("")) +
-  theme(aspect.ratio = 8/20) +
+  theme(aspect.ratio = 5/20) +
   ylab(expression(bold("Water Conncetration " *Sigma*"PCB 1990 - 2019 (pg/L)"))) +
-  theme(axis.text.y = element_text(face = "bold", size = 8),
+  theme(axis.text.y = element_text(face = "bold", size = 9),
         axis.title.y = element_text(face = "bold", size = 9)) +
   theme(axis.text.x = element_text(face = "bold", size = 8,
                                    angle = 60, hjust = 1),
-        axis.title.x = element_text(face = "bold", size = 7)) +
+        axis.title.x = element_text(face = "bold", size = 8)) +
   theme(axis.ticks = element_line(size = 0.8, color = "black"), 
         axis.ticks.length = unit(0.2, "cm")) +
   annotation_logticks(sides = "l") +
   geom_jitter(position = position_jitter(0.3), cex = 1.2,
               shape = 1, col = "#66ccff") +
-  geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0)
-
+  geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
+  geom_hline(yintercept = 5600, color = "#cc0000")
 
 # Individual congeners
 # Summary statistic of individual congeners
@@ -153,7 +155,7 @@ cong.median <- as.numeric(sub('.*:', '', summary(d.cong.2, na.rm = T, zero = T)[
 ggplot(stack(d.cong.2), aes(x = ind, y = values)) +
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) +
-  geom_boxplot(width = 0.6, outlier.colour = "lightblue", col = "lightblue",
+  geom_boxplot(width = 0.6, outlier.colour = "#66ccff", col = "#66ccff",
                outlier.shape = 1) +
   scale_x_discrete(labels = d.cong.freq$congener) + # use to change the "." to "+"
   theme_bw() +
@@ -175,65 +177,14 @@ ggplot(stack(d.cong.2), aes(x = ind, y = values)) +
                       mid = unit(1.5, "mm"),
                       long = unit(2, "mm"))
 
-# Remove samples with = 0 and NA
-d.cong.PCB4.10 <- subset(d.cong.2,
-                         d.cong.2$PCB4.10 != 0 & d.cong.2$PCB4.10 != "NA")
-
-ggplot(d.cong.PCB4.10, aes(x = "", y = PCB4.10)) + 
-  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-                labels = trans_format("log10", math_format(10^.x))) +
-  theme_classic() +
-  theme(aspect.ratio = 14/2) +
-  xlab(expression(bold("PCBs 4+10 (n = 1604)")))+
-  ylab(expression(bold("Water Concentration 1990 - 2019 (pg/L)"))) +
-  theme(axis.text.y = element_text(face = "bold", size = 12),
-        axis.title.y = element_text(face = "bold", size = 12)) +
-  theme(axis.text.x = element_text(face = "bold", size = 10),
-        axis.title.x = element_text(face = "bold", size = 10,
-                                    angle = 45, hjust = 1.75,
-                                    vjust = 1.95)) +
-  theme(axis.ticks = element_line(size = 0.8, color = "black"), 
-        axis.ticks.length = unit(0.2, "cm")) +
-  geom_jitter(position = position_jitter(0.3), cex = 1.2,
-              shape = 1, col = "lightblue") +
-  geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
-  annotation_logticks(sides = "l")
-
-
-
-# Per congeners
-# using w.3
-ggplot(w.3, aes(x = factor(SiteName, levels = sites),
-                y = PCB3)) + 
-  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-                labels = trans_format("log10", math_format(10^.x))) +
-  geom_boxplot(width = 0.6, outlier.colour = "white") +
-  theme_bw() +
-  xlab(expression("")) +
-  theme(aspect.ratio = 8/20) +
-  ylab(expression(bold(Sigma*"PCB (pg/L)"))) +
-  theme(axis.text.y = element_text(face = "bold", size = 8),
-        axis.title.y = element_text(face = "bold", size = 9)) +
-  theme(axis.text.x = element_text(face = "bold", size = 8,
-                                   angle = 60, hjust = 1),
-        axis.title.x = element_text(face = "bold", size = 7)) +
-  theme(axis.ticks = element_line(size = 0.8, color = "black"), 
-        axis.ticks.length = unit(0.2, "cm")) +
-  annotation_logticks(sides = "l") +
-  geom_jitter(position = position_jitter(0.3), cex = 1,
-              shape = 1, col = "black")
-
-# temporal log box-plots
-# points
-w$SampleDate <- as.Date(w$SampleDate)
+# Temporal plots
+# Change date format
+d.cong$SampleDate <- strptime(x = as.character(d.cong$SampleDate), format = "%m/%d/%Y")
 
 # Total PCBs
-# using w.2 and w.4
 
-ggplot(w.4, aes(y=rowSums(w.2, na.rm = T),
-                x=reorder(format(SampleDate,'%Y-%m'),
-                          SampleDate))) +
-  geom_boxplot(width = 0.3, outlier.colour = "white") +
+ggplot(d.cong, aes(y = rowSums(d.cong[, c(12:115)],  na.rm = T),
+                x = format(SampleDate,'%Y'))) +
   xlab("") +
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) +
@@ -248,8 +199,10 @@ ggplot(w.4, aes(y=rowSums(w.2, na.rm = T),
   theme(axis.ticks = element_line(size = 0.8, color = "black"), 
         axis.ticks.length = unit(0.2, "cm")) +
   annotation_logticks(sides = "l") +
-  geom_jitter(position = position_jitter(0.3), cex = 1,
-              shape = 1, col = "black")
+  geom_jitter(position = position_jitter(0.3), cex = 1.2,
+              shape = 1, col = "#66ccff") +
+  geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
+  annotation_logticks(sides = "l")
 
 # Congeners
 # using w.3
