@@ -8,7 +8,6 @@ install.packages("ggpmisc")
 install.packages("tidyverse")
 install.packages("reshape2")
 install.packages("ggplot2")
-install.packages("anytime")
 
 # Load libraries
 library(ggplot2)
@@ -19,7 +18,6 @@ library(gridExtra)
 library(tidyverse)
 library(reshape2)
 library(stringr)
-library(anytime) # change factor to date
 
 # Data in pg/L
 d.cong <- read.csv("WaterDataCongener050322.csv")
