@@ -116,6 +116,11 @@ ggplot(d.cong.2, aes(x = "", y = rowSums(d.cong.2, na.rm = T))) +
   annotation_logticks(sides = "l")
 
 # Individual congeners
+# Summary statistic of individual congeners
+summary(d.cong.2, na.rm = T, zero = T)
+# Obtain the median for each individual congener
+cong.median <- as.numeric(sub('.*:', '', summary(d.cong.2, na.rm = T, zero = T)[3,]))
+
 # Individual PCB boxplot
 
 ggplot(stack(d.cong.2), aes(x = ind, y = values)) +
@@ -146,12 +151,6 @@ ggplot(stack(d.cong.2), aes(x = ind, y = values)) +
 # Remove samples with = 0 and NA
 d.cong.PCB4.10 <- subset(d.cong.2,
                          d.cong.2$PCB4.10 != 0 & d.cong.2$PCB4.10 != "NA")
-
-# Summary statistic of individual congeners
-summary(d.cong.PCB4.10$PCB4.10, na.rm = T)
-summary(d.cong.2, na.rm = T, zero = T)
-
-
 
 ggplot(d.cong.PCB4.10, aes(x = "", y = PCB4.10)) + 
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
