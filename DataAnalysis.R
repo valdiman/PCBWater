@@ -175,7 +175,35 @@ ggplot(d.cong, aes(x = factor(StateSampled, levels = sites),
   geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
   geom_hline(yintercept = 5600, color = "#cc0000")
 
+# Selected PCB congeners
+# Format data for selected PCBs
+# Remove samples with = 0 and NA
+d.cong.pcb.sp <- subset(d.cong, d.cong$PCB4.10 != 0 & d.cong$PCB4.10 != "NA")
+d.cong.pcb.sp <- subset(d.cong.pcb.sp, select = -c(ID))
+d.cong.pcb.sp <- subset(d.cong.pcb.sp, select = -c(SiteName:AroclorCongener))
+d.cong.pcb.sp <- subset(d.cong.pcb.sp, select = -c(A1016:A1260))
 
+# Plot
+ggplot(d.cong.pcb.sp, aes(x = factor(StateSampled, levels = sites),
+                   y = PCB4.10)) + 
+  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                labels = trans_format("log10", math_format(10^.x))) +
+  theme_bw() +
+  xlab(expression("")) +
+  theme(aspect.ratio = 5/20) +
+  ylab(expression(bold("Water Conncetration PCB 4+10 1990 - 2019 (pg/L)"))) +
+  theme(axis.text.y = element_text(face = "bold", size = 9),
+        axis.title.y = element_text(face = "bold", size = 9)) +
+  theme(axis.text.x = element_text(face = "bold", size = 8,
+                                   angle = 60, hjust = 1),
+        axis.title.x = element_text(face = "bold", size = 8)) +
+  theme(axis.ticks = element_line(size = 0.8, color = "black"), 
+        axis.ticks.length = unit(0.2, "cm")) +
+  annotation_logticks(sides = "l") +
+  geom_jitter(position = position_jitter(0.3), cex = 1.2,
+              shape = 1, col = "#66ccff") +
+  geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
+  geom_hline(yintercept = 374.15, color = "#cc0000")
 
 # Temporal plots
 # Change date format
@@ -205,17 +233,22 @@ ggplot(d.cong, aes(y = rowSums(d.cong[, c(12:115)],  na.rm = T),
   annotation_logticks(sides = "l")
 
 # Congeners
+# Format data for selected PCBs
+# the first line needs to be changed for each congener
+# Remove samples with = 0 and NA
+d.cong.pcb.tp <- subset(d.cong, d.cong$PCB4.10 != 0 & d.cong$PCB4.10 != "NA")
+d.cong.pcb.tp <- subset(d.cong.pcb.tp, select = -c(ID:SiteSampled))
+d.cong.pcb.tp <- subset(d.cong.pcb.tp, select = -c(Latitude:AroclorCongener))
+d.cong.pcb.tp <- subset(d.cong.pcb.tp, select = -c(A1016:A1260))
 
-ggplot(w.3, aes(y=PCB1,
-                x=reorder(format(SampleDate,'%Y-%m'),
-                          SampleDate))) +
-  geom_boxplot(width = 0.3, outlier.colour = "white") +
+ggplot(d.cong.pcb.tp, aes(y = PCB4.10,
+                   x = format(SampleDate,'%Y'))) +
   xlab("") +
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) +
   theme_bw() +
   theme(aspect.ratio = 5/15) +
-  ylab(expression(bold("PCB 3 concentration (pg/L)"))) +
+  ylab(expression(bold(Sigma*"PCB concentration (pg/L)"))) +
   theme(axis.text.y = element_text(face = "bold", size = 8),
         axis.title.y = element_text(face = "bold", size = 9)) +
   theme(axis.text.x = element_text(face = "bold", size = 7,
@@ -224,8 +257,11 @@ ggplot(w.3, aes(y=PCB1,
   theme(axis.ticks = element_line(size = 0.8, color = "black"), 
         axis.ticks.length = unit(0.2, "cm")) +
   annotation_logticks(sides = "l") +
-  geom_jitter(position = position_jitter(0.3), cex = 1,
-              shape = 1, col = "black")
+  geom_jitter(position = position_jitter(0.3), cex = 1.2,
+              shape = 1, col = "#66ccff") +
+  geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
+  annotation_logticks(sides = "l")
+
 
 # Plot individual site
 
