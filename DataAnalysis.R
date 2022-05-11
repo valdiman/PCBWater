@@ -11,13 +11,13 @@ install.packages("ggplot2")
 
 # Load libraries
 library(ggplot2)
-library(ggpubr)
-library(ggpmisc)
+#library(ggpubr)
+#library(ggpmisc)
 library(scales) # function trans_breaks
-library(gridExtra)
-library(tidyverse)
-library(reshape2)
-library(stringr)
+#library(gridExtra)
+#library(tidyverse)
+#library(reshape2)
+#library(stringr)
 
 # Data in pg/L
 d.cong <- read.csv("WaterDataCongener050322.csv")
@@ -115,7 +115,40 @@ ggplot(d.cong.2, aes(x = "", y = rowSums(d.cong.2, na.rm = T))) +
   geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
   annotation_logticks(sides = "l")
 
-# Spatial plot
+# Individual congeners
+# Summary statistic of individual congeners
+summary(d.cong.2, na.rm = T, zero = T)
+# Obtain the median for each individual congener
+cong.median <- as.numeric(sub('.*:', '', summary(d.cong.2,
+                                                 na.rm = T, zero = T)[3,]))
+
+# Individual PCB boxplot
+ggplot(stack(d.cong.2), aes(x = ind, y = values)) +
+  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                labels = trans_format("log10", math_format(10^.x))) +
+  geom_boxplot(width = 0.6, outlier.colour = "#66ccff", col = "#66ccff",
+               outlier.shape = 1) +
+  scale_x_discrete(labels = d.cong.freq$congener) + # use to change the "." to "+"
+  theme_bw() +
+  theme(aspect.ratio = 25/135) +
+  xlab(expression("")) +
+  ylab(expression(bold("PCB congener concentration (pg/L)"))) +
+  theme(axis.text.y = element_text(face = "bold", size = 8,
+                                   color = "black"),
+        axis.title.y = element_text(face = "bold", size = 8,
+                                    color = "black")) +
+  theme(axis.text.x = element_text(face = "bold", size = 6,
+                                   angle = 60, hjust = 1,
+                                   color = "black"),
+        axis.title.x = element_text(face = "bold", size = 8)) +
+  theme(axis.ticks = element_line(size = 0.6, color = "black"), 
+        axis.ticks.length = unit(0.2, "cm")) +
+  annotation_logticks(sides = "l",
+                      short = unit(0.5, "mm"),
+                      mid = unit(1.5, "mm"),
+                      long = unit(2, "mm"))
+
+# Spatial plots and analysis ----------------------------------------------
 # Modify x-axis
 sites <- c("CA", "DE", "ID", "IN", "MA", "MI", "MO",
            "MT", "NM", "NY", "OR", "TX", "WA", "WI")
@@ -142,45 +175,14 @@ ggplot(d.cong, aes(x = factor(StateSampled, levels = sites),
   geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
   geom_hline(yintercept = 5600, color = "#cc0000")
 
-# Individual congeners
-# Summary statistic of individual congeners
-summary(d.cong.2, na.rm = T, zero = T)
-# Obtain the median for each individual congener
-cong.median <- as.numeric(sub('.*:', '', summary(d.cong.2, na.rm = T, zero = T)[3,]))
 
-# Individual PCB boxplot
-
-ggplot(stack(d.cong.2), aes(x = ind, y = values)) +
-  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-                labels = trans_format("log10", math_format(10^.x))) +
-  geom_boxplot(width = 0.6, outlier.colour = "#66ccff", col = "#66ccff",
-               outlier.shape = 1) +
-  scale_x_discrete(labels = d.cong.freq$congener) + # use to change the "." to "+"
-  theme_bw() +
-  theme(aspect.ratio = 25/135) +
-  xlab(expression("")) +
-  ylab(expression(bold("PCB congener concentration (pg/L)"))) +
-  theme(axis.text.y = element_text(face = "bold", size = 8,
-                                   color = "black"),
-        axis.title.y = element_text(face = "bold", size = 8,
-                                    color = "black")) +
-  theme(axis.text.x = element_text(face = "bold", size = 6,
-                                   angle = 60, hjust = 1,
-                                   color = "black"),
-        axis.title.x = element_text(face = "bold", size = 8)) +
-  theme(axis.ticks = element_line(size = 0.6, color = "black"), 
-        axis.ticks.length = unit(0.2, "cm")) +
-  annotation_logticks(sides = "l",
-                      short = unit(0.5, "mm"),
-                      mid = unit(1.5, "mm"),
-                      long = unit(2, "mm"))
 
 # Temporal plots
 # Change date format
-d.cong$SampleDate <- strptime(x = as.character(d.cong$SampleDate), format = "%m/%d/%Y")
+d.cong$SampleDate <- strptime(x = as.character(d.cong$SampleDate),
+                              format = "%m/%d/%Y")
 
 # Total PCBs
-
 ggplot(d.cong, aes(y = rowSums(d.cong[, c(12:115)],  na.rm = T),
                 x = format(SampleDate,'%Y'))) +
   xlab("") +
@@ -203,7 +205,6 @@ ggplot(d.cong, aes(y = rowSums(d.cong[, c(12:115)],  na.rm = T),
   annotation_logticks(sides = "l")
 
 # Congeners
-# using w.3
 
 ggplot(w.3, aes(y=PCB1,
                 x=reorder(format(SampleDate,'%Y-%m'),
