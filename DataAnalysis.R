@@ -205,7 +205,6 @@ ggplot(d.cong.pcb.sp, aes(x = factor(StateSampled, levels = sites),
   geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
   geom_hline(yintercept = 374.15, color = "#cc0000")
 
-
 # Temporal plots and analysis ---------------------------------------------
 # Change date format
 d.cong$SampleDate <- strptime(x = as.character(d.cong$SampleDate),
@@ -280,7 +279,7 @@ summary(rowSums(Fox.River.1, na.rm = T))
 
 # Total PCBs in 1 box plot
 ggplot(Fox.River.1, aes(x = "", y = rowSums(Fox.River.1, na.rm = T))) + 
-  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x)(c(0.1, 1e4)),
                 labels = trans_format("log10", math_format(10^.x))) +
   theme_classic() +
   theme(aspect.ratio = 14/2) +
@@ -340,7 +339,7 @@ sites.FR <- c("LakeWinnebago", "OperableUnit1", "OperableUnit2A",
 # Total PCBs
 ggplot(Fox.River, aes(x = factor(SiteSampled, levels = sites.FR),
                    y = rowSums(Fox.River[, c(12:115)],  na.rm = T))) + 
-  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x)(c(0.1, 1e6)),
                 labels = trans_format("log10", math_format(10^.x))) +
   theme_bw() +
   xlab(expression("")) +
@@ -367,7 +366,7 @@ FR.pcbi.sp <- subset(Fox.River,
 # Plot
 ggplot(FR.pcbi.sp, aes(x = factor(SiteSampled, levels = sites.FR),
                           y = PCB4.10)) + 
-  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x)(c(0.1, 1e6)),
                 labels = trans_format("log10", math_format(10^.x))) +
   theme_bw() +
   xlab(expression("")) +
@@ -386,10 +385,6 @@ ggplot(FR.pcbi.sp, aes(x = factor(SiteSampled, levels = sites.FR),
   geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0)
 
 # Temporal plot
-# Change date format
-Fox.River$SampleDate <- strptime(x = as.character(Fox.River$SampleDate),
-                              format = "%m/%d/%Y")
-
 # Total PCBs
 ggplot(Fox.River, aes(y = rowSums(Fox.River[, c(12:115)],  na.rm = T),
                    x = format(SampleDate,'%Y'))) +
@@ -516,7 +511,7 @@ HR.pcbi.sp <- subset(Hud.River,
 # Plot
 ggplot(HR.pcbi.sp, aes(x = factor(SiteSampled, levels = sites.HR),
                        y = PCB4.10)) + 
-  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x)(c(0.1, 1e4)),
                 labels = trans_format("log10", math_format(10^.x))) +
   theme_bw() +
   xlab(expression("")) +
@@ -535,10 +530,6 @@ ggplot(HR.pcbi.sp, aes(x = factor(SiteSampled, levels = sites.HR),
   geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0)
 
 # Temporal plot
-# Change date format
-Hud.River$SampleDate <- strptime(x = as.character(Hud.River$SampleDate),
-                                 format = "%m/%d/%Y")
-
 # Total PCBs
 ggplot(Hud.River, aes(y = rowSums(Hud.River[, c(12:115)],  na.rm = T),
                       x = format(SampleDate,'%Y'))) +
