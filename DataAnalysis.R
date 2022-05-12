@@ -17,7 +17,7 @@ library(scales) # function trans_breaks
 #library(gridExtra)
 #library(tidyverse)
 #library(reshape2)
-#library(stringr)
+library(stringr)
 
 # Data in pg/L
 d.cong <- read.csv("WaterDataCongener050322.csv")
@@ -54,7 +54,7 @@ ggplot(d.aroc.2, aes(x = "", y = rowSums(d.aroc.2, na.rm = T))) +
   geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
   annotation_logticks(sides = "l")
 
-# Prepare data for plots with congener dataset
+# Prepare data for plots with "congener dataset"
 # Remove samples (rows) with total PCBs  = 0
 d.cong.2 <- d.cong[!(rowSums(d.cong[, c(12:115)], na.rm = TRUE)==0),]
 # Remove metadata
@@ -205,7 +205,8 @@ ggplot(d.cong.pcb.sp, aes(x = factor(StateSampled, levels = sites),
   geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
   geom_hline(yintercept = 374.15, color = "#cc0000")
 
-# Temporal plots
+
+# Temporal plots and analysis ---------------------------------------------
 # Change date format
 d.cong$SampleDate <- strptime(x = as.character(d.cong$SampleDate),
                               format = "%m/%d/%Y")
@@ -236,19 +237,20 @@ ggplot(d.cong, aes(y = rowSums(d.cong[, c(12:115)],  na.rm = T),
 # Format data for selected PCBs
 # the first line needs to be changed for each congener
 # Remove samples with = 0 and NA
-d.cong.pcb.tp <- subset(d.cong, d.cong$PCB4.10 != 0 & d.cong$PCB4.10 != "NA")
+d.cong.pcb.tp <- subset(d.cong,
+                        d.cong$PCB182.187 != 0 & d.cong$PCB182.187 != "NA")
 d.cong.pcb.tp <- subset(d.cong.pcb.tp, select = -c(ID:SiteSampled))
 d.cong.pcb.tp <- subset(d.cong.pcb.tp, select = -c(Latitude:AroclorCongener))
 d.cong.pcb.tp <- subset(d.cong.pcb.tp, select = -c(A1016:A1260))
 
-ggplot(d.cong.pcb.tp, aes(y = PCB4.10,
+ggplot(d.cong.pcb.tp, aes(y = PCB182.187,
                    x = format(SampleDate,'%Y'))) +
   xlab("") +
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) +
   theme_bw() +
   theme(aspect.ratio = 5/15) +
-  ylab(expression(bold(Sigma*"PCB concentration (pg/L)"))) +
+  ylab(expression(bold("PCB 182+187 concentration (pg/L)"))) +
   theme(axis.text.y = element_text(face = "bold", size = 8),
         axis.title.y = element_text(face = "bold", size = 9)) +
   theme(axis.text.x = element_text(face = "bold", size = 7,
@@ -262,17 +264,21 @@ ggplot(d.cong.pcb.tp, aes(y = PCB4.10,
   geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
   annotation_logticks(sides = "l")
 
+# Plot and analysis per sites ---------------------------------------------
+# (i) Fox River, WI
 
-# Plot individual site
 
-w.5 <- w.4[str_detect(w.4$SiteName, 'FoxRiver'),] 
+Fox.River <- d.cong[str_detect(d.cong$SiteName, 'FoxRiver'),] 
 # remove samples (rows) with total PCBs  = 0
-w.6 <- w.5[!(rowSums(w.5[, c(12:115)], na.rm = TRUE)==0),] # sum of PCB1 to PCB209
-w.6 <- subset(w.6, select = -c(ID:AroclorCongener))
-w.6 <- subset(w.6, select = -c(AroclorA1016:AroclorA1260))
+Fox.River <- Fox.River[!(rowSums(Fox.River[, c(12:115)], na.rm = TRUE)==0),] # sum of PCB1 to PCB209
+Fox.River.1 <- cbind(Fox.River$SampleDate,
+                   rowSums(Fox.River[, c(12:115)], na.rm = TRUE))
 
-ggplot(w.5, aes(y=rowSums(w.6, na.rm = T),
-                x=reorder(format(SampleDate,'%Y-%m'),
+FR.1 <- subset(FR.0, select = -c(ID:AroclorCongener))
+FR.1 <- subset(FR.1, select = -c(A1016:A1260))
+
+ggplot(Fox.River, aes(y = rowSums(Fox.River[, c(12:115)], na.rm = TRUE),
+                x = reorder(format(SampleDate,'%Y-%m'),
                           SampleDate))) +
   geom_boxplot(width = 0.3, outlier.colour = "white") +
   xlab("") +
