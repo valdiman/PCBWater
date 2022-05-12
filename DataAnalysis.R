@@ -412,4 +412,153 @@ ggplot(Fox.River, aes(y = rowSums(Fox.River[, c(12:115)],  na.rm = T),
   geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
   annotation_logticks(sides = "l")
 
+# (ii) Hudson River, NY
+# Select Kalamazoo River only
+Hud.River <- d.cong[str_detect(d.cong$SiteName, 'HudsonRiver'),] 
+# Remove samples (rows) with total PCBs  = 0
+Hud.River <- Hud.River[!(rowSums(Hud.River[, c(12:115)], na.rm = TRUE)==0),]
+# Remove metadata
+Hud.River.1 <- subset(Hud.River, select = -c(ID:AroclorCongener))
+# Remove Aroclor data
+Hud.River.1 <- subset(Hud.River.1, select = -c(A1016:A1260))
+
+# Summary statistic of total PCBs
+summary(rowSums(Hud.River.1, na.rm = T))
+
+# Total PCBs in 1 box plot
+ggplot(Hud.River.1, aes(x = "", y = rowSums(Hud.River.1, na.rm = T))) + 
+  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                labels = trans_format("log10", math_format(10^.x))) +
+  theme_classic() +
+  theme(aspect.ratio = 14/2) +
+  xlab(expression(bold(Sigma*"PCB (n = 453)")))+
+  ylab(expression(bold("Hudson River 2005 - 2017 (pg/L)"))) +
+  theme(axis.text.y = element_text(face = "bold", size = 12),
+        axis.title.y = element_text(face = "bold", size = 12)) +
+  theme(axis.text.x = element_text(face = "bold", size = 10),
+        axis.title.x = element_text(face = "bold", size = 10,
+                                    angle = 45, hjust = 1.8,
+                                    vjust = 2)) +
+  theme(axis.ticks = element_line(size = 0.8, color = "black"), 
+        axis.ticks.length = unit(0.2, "cm")) +
+  geom_jitter(position = position_jitter(0.3), cex = 1.2,
+              shape = 1, col = "#66ccff") +
+  geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
+  annotation_logticks(sides = "l")
+
+# Individual congeners
+# Summary statistic of individual congeners
+summary(Hud.River.1, na.rm = T, zero = T)
+# Obtain the median for each individual congener
+Hud.River.cong.median <- as.numeric(sub('.*:', '', summary(Hud.River.1,
+                                                           na.rm = T, zero = T)[3,]))
+
+# Individual PCB boxplot
+ggplot(stack(Hud.River.1), aes(x = ind, y = values)) +
+  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                labels = trans_format("log10", math_format(10^.x))) +
+  geom_boxplot(width = 0.6, outlier.colour = "#66ccff", col = "#66ccff",
+               outlier.shape = 1) +
+  scale_x_discrete(labels = d.cong.freq$congener) + # This is from the frequency detection plot
+  theme_bw() +
+  theme(aspect.ratio = 25/135) +
+  xlab(expression("")) +
+  ylab(expression(bold("PCB congener (pg/L)"))) +
+  theme(axis.text.y = element_text(face = "bold", size = 8,
+                                   color = "black"),
+        axis.title.y = element_text(face = "bold", size = 8,
+                                    color = "black")) +
+  theme(axis.text.x = element_text(face = "bold", size = 6,
+                                   angle = 60, hjust = 1,
+                                   color = "black"),
+        axis.title.x = element_text(face = "bold", size = 8)) +
+  theme(axis.ticks = element_line(size = 0.6, color = "black"), 
+        axis.ticks.length = unit(0.2, "cm")) +
+  annotation_logticks(sides = "l",
+                      short = unit(0.5, "mm"),
+                      mid = unit(1.5, "mm"),
+                      long = unit(2, "mm"))
+
+# Spatial plots and analysis
+# Modify x-axis
+sites.HR <- c("Albany", "BakersFalls", "DixBridge", "Lock1",
+              "MohawkRiverAtCohoes", "Poughkeepsie", "RogersIsland",
+              "Schuylerville", "Stillwater", "ThompsonIsland",
+              "ThompsonIslandDam", "Waterford")
+
+# Total PCBs
+ggplot(Hud.River, aes(x = factor(SiteSampled, levels = sites.HR),
+                      y = rowSums(Hud.River[, c(12:115)],  na.rm = T))) + 
+  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                labels = trans_format("log10", math_format(10^.x))) +
+  theme_bw() +
+  xlab(expression("")) +
+  theme(aspect.ratio = 5/20) +
+  ylab(expression(bold(Sigma*"PCB 2005 - 2017 (pg/L)"))) +
+  theme(axis.text.y = element_text(face = "bold", size = 9),
+        axis.title.y = element_text(face = "bold", size = 9)) +
+  theme(axis.text.x = element_text(face = "bold", size = 8,
+                                   angle = 60, hjust = 1),
+        axis.title.x = element_text(face = "bold", size = 8)) +
+  theme(axis.ticks = element_line(size = 0.8, color = "black"), 
+        axis.ticks.length = unit(0.2, "cm")) +
+  annotation_logticks(sides = "l") +
+  geom_jitter(position = position_jitter(0.3), cex = 1.2,
+              shape = 1, col = "#66ccff") +
+  geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0)
+
+# Selected PCB congeners
+# Format data for selected PCBs
+# Remove samples with = 0 and NA
+HR.pcbi.sp <- subset(Hud.River,
+                     Hud.River$PCB4.10 != 0 & Hud.River$PCB4.10 != "NA")
+
+# Plot
+ggplot(HR.pcbi.sp, aes(x = factor(SiteSampled, levels = sites.HR),
+                       y = PCB4.10)) + 
+  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                labels = trans_format("log10", math_format(10^.x))) +
+  theme_bw() +
+  xlab(expression("")) +
+  theme(aspect.ratio = 5/20) +
+  ylab(expression(bold("PCB 4+10 2005 - 2017 (pg/L)"))) +
+  theme(axis.text.y = element_text(face = "bold", size = 9),
+        axis.title.y = element_text(face = "bold", size = 9)) +
+  theme(axis.text.x = element_text(face = "bold", size = 8,
+                                   angle = 60, hjust = 1),
+        axis.title.x = element_text(face = "bold", size = 8)) +
+  theme(axis.ticks = element_line(size = 0.8, color = "black"), 
+        axis.ticks.length = unit(0.2, "cm")) +
+  annotation_logticks(sides = "l") +
+  geom_jitter(position = position_jitter(0.3), cex = 1.2,
+              shape = 1, col = "#66ccff") +
+  geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0)
+
+# Temporal plot
+# Change date format
+Hud.River$SampleDate <- strptime(x = as.character(Hud.River$SampleDate),
+                                 format = "%m/%d/%Y")
+
+# Total PCBs
+ggplot(Hud.River, aes(y = rowSums(Hud.River[, c(12:115)],  na.rm = T),
+                      x = format(SampleDate,'%Y'))) +
+  xlab("") +
+  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                labels = trans_format("log10", math_format(10^.x))) +
+  theme_bw() +
+  theme(aspect.ratio = 5/15) +
+  ylab(expression(bold(Sigma*"PCB concentration (pg/L)"))) +
+  theme(axis.text.y = element_text(face = "bold", size = 8),
+        axis.title.y = element_text(face = "bold", size = 9)) +
+  theme(axis.text.x = element_text(face = "bold", size = 7,
+                                   angle = 45, hjust = 1),
+        axis.title.x = element_text(face = "bold", size = 10)) +
+  theme(axis.ticks = element_line(size = 0.8, color = "black"), 
+        axis.ticks.length = unit(0.2, "cm")) +
+  annotation_logticks(sides = "l") +
+  geom_jitter(position = position_jitter(0.3), cex = 1.2,
+              shape = 1, col = "#66ccff") +
+  geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
+  annotation_logticks(sides = "l")
+
 
