@@ -209,6 +209,14 @@ ggplot(d.cong.pcb.sp, aes(x = factor(StateSampled, levels = sites),
 # Change date format
 d.cong$SampleDate <- strptime(x = as.character(d.cong$SampleDate),
                               format = "%m/%d/%Y")
+d.cong.3 <- as.matrix(d.cong.2)
+d.cong.median <- data.frame(colMedians(d.cong.3, na.rm=TRUE))
+d.cong.median <- cbind(data.frame(logKoa$congener), d.cong.median)
+colnames(d.cong.median) <- c("congener", "median.cong")
+                
+                
+
+
 
 # Total PCBs
 ggplot(d.cong, aes(y = rowSums(d.cong[, c(12:115)],  na.rm = T),
@@ -230,7 +238,10 @@ ggplot(d.cong, aes(y = rowSums(d.cong[, c(12:115)],  na.rm = T),
   geom_jitter(position = position_jitter(0.3), cex = 1.2,
               shape = 1, col = "#66ccff") +
   geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
-  annotation_logticks(sides = "l")
+  annotation_logticks(sides = "l") +
+                  geom_line(data = frac.2.med, aes(congener,
+                                   median.frac, group = 1),
+            color = "blue", size = 0.8) +
 
 # Congeners
 # Format data for selected PCBs
