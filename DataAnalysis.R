@@ -251,20 +251,26 @@ ggplot(d.cong.tmp.2, aes(y = tPCB,
 # Format data for selected PCBs
 # the first line needs to be changed for each congener
 # Remove samples with = 0 and NA
-d.cong.pcb.tp <- subset(d.cong,
-                        d.cong$PCB182.187 != 0 & d.cong$PCB182.187 != "NA")
-d.cong.pcb.tp <- subset(d.cong.pcb.tp, select = -c(ID:SiteSampled))
-d.cong.pcb.tp <- subset(d.cong.pcb.tp, select = -c(Latitude:AroclorCongener))
-d.cong.pcb.tp <- subset(d.cong.pcb.tp, select = -c(A1016:A1260))
+# Remove samples (rows) with total PCBs  = 0
+d.congi.tmp <- subset(d.cong,
+                      d.cong$PCB4.10 != 0 & d.cong$PCB4.10 != "NA")
+# Change date format
+d.congi.tmp$SampleDate <- strptime(x = as.character(d.congi.tmp$SampleDate),
+                                   format = "%m/%d/%Y")
+# # Generate data.frame to be plotted
+d.congi.tmp.2 <- cbind(data.frame(d.congi.tmp$SampleDate),
+                       d.congi.tmp$PCB4.10)
+colnames(d.congi.tmp.2) <- c("SampleDate", "PCBi")
 
-ggplot(d.cong.pcb.tp, aes(y = PCB182.187,
-                   x = format(SampleDate,'%Y'))) +
+# Plot
+ggplot(d.congi.tmp.2, aes(y = PCBi,
+                          x = format(SampleDate,'%Y'))) +
   xlab("") +
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) +
   theme_bw() +
   theme(aspect.ratio = 5/15) +
-  ylab(expression(bold("PCB 182+187 concentration (pg/L)"))) +
+  ylab(expression(bold("PCBi concentration (pg/L)"))) +
   theme(axis.text.y = element_text(face = "bold", size = 8),
         axis.title.y = element_text(face = "bold", size = 9)) +
   theme(axis.text.x = element_text(face = "bold", size = 7,
@@ -276,7 +282,9 @@ ggplot(d.cong.pcb.tp, aes(y = PCB182.187,
   geom_jitter(position = position_jitter(0.3), cex = 1.2,
               shape = 1, col = "#66ccff") +
   geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
-  annotation_logticks(sides = "l")
+  annotation_logticks(sides = "l") +
+  geom_smooth(method = lm, se = TRUE, formula = y ~ x,
+              aes(group = 1), colour = "#ff6611", size = 0.5)
 
 # Plot and analysis per sites ---------------------------------------------
 # (i) Fox River, WI
