@@ -8,6 +8,7 @@ install.packages("ggpmisc")
 install.packages("tidyverse")
 install.packages("reshape2")
 install.packages("ggplot2")
+install.packages("robustbase")
 
 # Load libraries
 library(ggplot2)
@@ -18,6 +19,7 @@ library(scales) # function trans_breaks
 #library(tidyverse)
 #library(reshape2)
 library(stringr)
+library(robustbase) #function colMedians
 
 # Data in pg/L
 d.cong <- read.csv("WaterDataCongener050322.csv")
@@ -206,21 +208,24 @@ ggplot(d.cong.pcb.sp, aes(x = factor(StateSampled, levels = sites),
   geom_hline(yintercept = 374.15, color = "#cc0000")
 
 # Temporal plots and analysis ---------------------------------------------
+# Prepare data
+# Remove samples (rows) with total PCBs  = 0
+d.cong.tmp.1 <- d.cong[!(rowSums(d.cong[, c(12:115)],
+                                 na.rm = TRUE)==0),]
 # Change date format
-d.cong$SampleDate <- strptime(x = as.character(d.cong$SampleDate),
-                              format = "%m/%d/%Y")
-d.cong.3 <- as.matrix(d.cong.2)
-d.cong.median <- data.frame(colMedians(d.cong.3, na.rm=TRUE))
-d.cong.median <- cbind(data.frame(logKoa$congener), d.cong.median)
-colnames(d.cong.median) <- c("congener", "median.cong")
-                
-                
-
-
+d.cong.tmp.1$SampleDate <- strptime(x = as.character(d.cong.tmp.1$SampleDate),
+                                    format = "%m/%d/%Y")
+# Get total PCB
+d.cong.tmp.2 <- rowSums(d.cong.tmp.1[, c(12:115)],  na.rm = T)
+# Generate data.frame to be plotted
+d.cong.tmp.2 <- as.matrix(d.cong.tmp.2)
+d.cong.tmp.2 <- cbind(data.frame(d.cong.tmp.1$SampleDate),
+                      d.cong.tmp.2)
+colnames(d.cong.tmp.2) <- c("SampleDate", "tPCB")
 
 # Total PCBs
-ggplot(d.cong, aes(y = rowSums(d.cong[, c(12:115)],  na.rm = T),
-                x = format(SampleDate,'%Y'))) +
+ggplot(d.cong.tmp.2, aes(y = tPCB,
+                         x = format(SampleDate,'%Y'))) +
   xlab("") +
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) +
@@ -239,9 +244,8 @@ ggplot(d.cong, aes(y = rowSums(d.cong[, c(12:115)],  na.rm = T),
               shape = 1, col = "#66ccff") +
   geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
   annotation_logticks(sides = "l") +
-                  geom_line(data = frac.2.med, aes(congener,
-                                   median.frac, group = 1),
-            color = "blue", size = 0.8) +
+  geom_smooth(method = lm, se = TRUE, formula = y ~ x,
+              aes(group = 1), colour = "#ff6611", size = 0.5) 
 
 # Congeners
 # Format data for selected PCBs
