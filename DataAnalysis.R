@@ -208,6 +208,58 @@ ggplot(d.cong.pcb.sp, aes(x = factor(StateSampled, levels = sites),
   geom_hline(yintercept = 374.15, color = "#cc0000")
 
 # Temporal plots and analysis ---------------------------------------------
+# Analysis
+# Calculate log10 total PCB per sample
+d.cong.tmp.1 <- d.cong[!(rowSums(d.cong[, c(12:115)],
+                                 na.rm = TRUE)==0),]
+d.cong.tmp.1$SampleDate <- strptime(x = as.character(d.cong.tmp.1$SampleDate),
+                                    format = "%m/%d/%Y")
+# Get total PCB
+d.cong.tmp.2 <- rowSums(d.cong.tmp.1[, c(12:115)],  na.rm = T)
+# Generate data.frame to be plotted
+d.cong.tmp.2 <- as.matrix(d.cong.tmp.2)
+d.cong.tmp.2 <- cbind(data.frame(d.cong.tmp.1$SampleDate),
+                      d.cong.tmp.2)
+colnames(d.cong.tmp.2) <- c("SampleDate", "tPCB")
+# Perform linear correlations
+fit.tPCB <- lm(tPCB ~ SampleDate, data = d.cong.tmp.2)
+summary(fit.tPCB)
+summary(fit.tPCB)$coef[2,"Estimate"]
+summary(fit.tPCB)$coef[2,"Pr(>|t|)"]
+
+# Regression per congener
+d.cong.tmi <- subset(d.cong.tmp.1, select = -c(ID:AroclorCongener))
+d.cong.tmi <- subset(d.cong.tmi, select = -c(A1016:A1260))
+
+# Create matrix
+tmp.matrix <- matrix(nrow = length(d.cong.tmi), ncol = 3)
+date <- data.frame(d.cong.tmp.1$SampleDate)
+
+# Perform regression
+for(i in 1:length(d.cong.tmi)) {
+  fit <- lm(log.a[,i] ~ time)
+  tmp.matrix[i,1] <- summary(fit)$coef[2,"Estimate"]
+  tmp.matrix[i,2] <- summary(fit)$adj.r.squared
+  tmp.matrix[i,3] <- summary(fit)$coef[2,"Pr(>|t|)"]
+}
+
+# Add column names
+colnames(tmp.matrix) <- c("slope", "R2", "p-value")
+# Add PCB congener names
+rownames(tmp.matrix) <- names()
+
+time <- data.frame(as.Date(d.cong.tmp.2$SampleDate) - as.Date(d.cong.tmp.2$SampleDate[1]))
+time <- sort(time$as.Date.d.cong.tmp.2.SampleDate....as.Date.d.cong.tmp.2.SampleDate.1..)
+
+a <- data.frame(a)
+log.a <- log10(a)
+log.a[log.a == -Inf] = NA
+
+
+
+
+
+# Plots
 # Prepare data
 # Remove samples (rows) with total PCBs  = 0
 d.cong.tmp.1 <- d.cong[!(rowSums(d.cong[, c(12:115)],
@@ -249,9 +301,8 @@ ggplot(d.cong.tmp.2, aes(y = tPCB,
 
 # Congeners
 # Format data for selected PCBs
-# the first line needs to be changed for each congener
+# First line needs to be changed for each congener
 # Remove samples with = 0 and NA
-# Remove samples (rows) with total PCBs  = 0
 d.congi.tmp <- subset(d.cong,
                       d.cong$PCB4.10 != 0 & d.cong$PCB4.10 != "NA")
 # Change date format
