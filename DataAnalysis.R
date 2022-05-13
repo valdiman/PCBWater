@@ -222,7 +222,7 @@ d.cong.tmp.2 <- cbind(data.frame(d.cong.tmp.1$SampleDate),
                       d.cong.tmp.2)
 colnames(d.cong.tmp.2) <- c("SampleDate", "tPCB")
 # Perform linear correlations
-fit.tPCB <- lm(tPCB ~ SampleDate, data = d.cong.tmp.2)
+fit.tPCB <- lm(log10(tPCB) ~ SampleDate, data = d.cong.tmp.2)
 summary(fit.tPCB)
 summary(fit.tPCB)$coef[2,"Estimate"]
 summary(fit.tPCB)$coef[2,"Pr(>|t|)"]
