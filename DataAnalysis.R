@@ -230,6 +230,11 @@ summary(fit.tPCB)$coef[2,"Pr(>|t|)"]
 # Regression per congener
 d.cong.tmi <- subset(d.cong.tmp.1, select = -c(ID:AroclorCongener))
 d.cong.tmi <- subset(d.cong.tmi, select = -c(A1016:A1260))
+log.d.cong.tmi <- log10(d.cong.tmi)
+log.d.cong.tmi[log.d.cong.tmi == -Inf] = NA
+
+time <- data.frame(as.Date(d.cong.tmp.2$SampleDate) - as.Date(d.cong.tmp.2$SampleDate[1]))
+time <- sort(time$as.Date.d.cong.tmp.2.SampleDate....as.Date.d.cong.tmp.2.SampleDate.1..)
 
 # Create matrix
 tmp.matrix <- matrix(nrow = length(d.cong.tmi), ncol = 3)
@@ -237,7 +242,7 @@ date <- data.frame(d.cong.tmp.1$SampleDate)
 
 # Perform regression
 for(i in 1:length(d.cong.tmi)) {
-  fit <- lm(log.a[,i] ~ time)
+  fit <- lm(log.d.cong.tmi[,i] ~ time)
   tmp.matrix[i,1] <- summary(fit)$coef[2,"Estimate"]
   tmp.matrix[i,2] <- summary(fit)$adj.r.squared
   tmp.matrix[i,3] <- summary(fit)$coef[2,"Pr(>|t|)"]
@@ -247,17 +252,6 @@ for(i in 1:length(d.cong.tmi)) {
 colnames(tmp.matrix) <- c("slope", "R2", "p-value")
 # Add PCB congener names
 rownames(tmp.matrix) <- names()
-
-time <- data.frame(as.Date(d.cong.tmp.2$SampleDate) - as.Date(d.cong.tmp.2$SampleDate[1]))
-time <- sort(time$as.Date.d.cong.tmp.2.SampleDate....as.Date.d.cong.tmp.2.SampleDate.1..)
-
-a <- data.frame(a)
-log.a <- log10(a)
-log.a[log.a == -Inf] = NA
-
-
-
-
 
 # Plots
 # Prepare data
