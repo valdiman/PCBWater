@@ -229,6 +229,7 @@ fit.tPCB <- lm(log10(tPCB) ~ time, data = tpcb.tmp.2)
 summary(fit.tPCB)
 summary(fit.tPCB)$coef[2,"Estimate"]
 summary(fit.tPCB)$coef[2,"Pr(>|t|)"]
+t0.5 <- -log(2)/summary(fit.tPCB)$coef[2,"Estimate"]/365 # half-life tPCB in yr = -log(2)/slope/365
 
 # Total PCBs
 ggplot(tpcb.tmp.2, aes(y = tPCB,
@@ -264,17 +265,18 @@ log.pcbi.tmp <- log10(pcbi.tmp)
 log.pcbi.tmp[log.pcbi.tmp == -Inf] = NA
 
 # Create matrix
-tmp.matrix <- matrix(nrow = length(log.pcbi.tmp), ncol = 3)
+tmp.matrix <- matrix(nrow = length(log.pcbi.tmp), ncol = 4)
 
 for(i in 1:length(log.pcbi.tmp)) {
   fit <- lm(log.pcbi.tmp[,i] ~ tpcb.tmp.2$time)
   tmp.matrix[i,1] <- summary(fit)$coef[2,"Estimate"]
   tmp.matrix[i,2] <- summary(fit)$adj.r.squared
   tmp.matrix[i,3] <- summary(fit)$coef[2,"Pr(>|t|)"]
+  tmp.matrix[i,4] <- -log(2)/summary(fit)$coef[2,"Estimate"]/365
 }
 
 # Add column names
-colnames(tmp.matrix) <- c("slope", "R2", "p-value")
+colnames(tmp.matrix) <- c("slope", "R2", "p-value", "half-life")
 # Add PCB congener names
 rownames(tmp.matrix) <- names()
 
