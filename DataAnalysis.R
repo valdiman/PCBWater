@@ -278,8 +278,10 @@ for(i in 1:length(log.pcbi.tmp)) {
 # Add column names
 colnames(tmp.matrix) <- c("slope", "R2", "p-value", "half-life")
 # Add PCB congener names
-rownames(tmp.matrix) <- names()
+congener <- colnames(pcbi.tmp)
+tmp.matrix <- cbind(congener, tmp.matrix)
 
+# Individual PCB plots
 # Include sampling dates
 plot.pcbi.tmp <- cbind(tpcb.tmp$SampleDate, pcbi.tmp)
 
