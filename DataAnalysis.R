@@ -210,68 +210,30 @@ ggplot(d.cong.pcb.sp, aes(x = factor(StateSampled, levels = sites),
 # Temporal plots and analysis ---------------------------------------------
 # Analysis
 # Calculate log10 total PCB per sample
-d.cong.tmp.1 <- d.cong[!(rowSums(d.cong[, c(12:115)],
+tpcb.tmp <- d.cong[!(rowSums(d.cong[, c(12:115)],
                                  na.rm = TRUE)==0),]
-d.cong.tmp.1$SampleDate <- strptime(x = as.character(d.cong.tmp.1$SampleDate),
+tpcb.tmp$SampleDate <- strptime(x = as.character(tpcb.tmp$SampleDate),
                                     format = "%m/%d/%Y")
 # Get total PCB
-d.cong.tmp.2 <- rowSums(d.cong.tmp.1[, c(12:115)],  na.rm = T)
-# Generate data.frame to be plotted
-d.cong.tmp.2 <- as.matrix(d.cong.tmp.2)
-d.cong.tmp.2 <- cbind(data.frame(d.cong.tmp.1$SampleDate),
-                      d.cong.tmp.2)
-colnames(d.cong.tmp.2) <- c("SampleDate", "tPCB")
+tpcb.tmp.2 <- rowSums(tpcb.tmp[, c(12:115)],  na.rm = T)
+# Get time in days
+time.day <- data.frame(as.Date(tpcb.tmp$SampleDate) - as.Date(tpcb.tmp$SampleDate[1]))
+colnames(time.day) <- c("time")
+# Generate data.frame for analysis and plots
+#d.cong.tmp.2 <- as.matrix(d.cong.tmp.2)
+tpcb.tmp.2 <- as.matrix(tpcb.tmp.2)
+tpcb.tmp.2 <- cbind(data.frame(time.day), tpcb.tmp.2, tpcb.tmp$SampleDate)
+colnames(tpcb.tmp.2) <- c("time", "tPCB", "date")
+
 # Perform linear correlations
-fit.tPCB <- lm(log10(tPCB) ~ SampleDate, data = d.cong.tmp.2)
+fit.tPCB <- lm(log10(tPCB) ~ time, data = tpcb.tmp.2)
 summary(fit.tPCB)
 summary(fit.tPCB)$coef[2,"Estimate"]
 summary(fit.tPCB)$coef[2,"Pr(>|t|)"]
 
-# Regression per congener
-d.cong.tmi <- subset(d.cong.tmp.1, select = -c(ID:AroclorCongener))
-d.cong.tmi <- subset(d.cong.tmi, select = -c(A1016:A1260))
-log.d.cong.tmi <- log10(d.cong.tmi)
-log.d.cong.tmi[log.d.cong.tmi == -Inf] = NA
-
-time <- data.frame(as.Date(d.cong.tmp.2$SampleDate) - as.Date(d.cong.tmp.2$SampleDate[1]))
-time <- sort(time$as.Date.d.cong.tmp.2.SampleDate....as.Date.d.cong.tmp.2.SampleDate.1..)
-
-# Create matrix
-tmp.matrix <- matrix(nrow = length(d.cong.tmi), ncol = 3)
-date <- data.frame(d.cong.tmp.1$SampleDate)
-
-# Perform regression
-for(i in 1:length(d.cong.tmi)) {
-  fit <- lm(log.d.cong.tmi[,i] ~ time)
-  tmp.matrix[i,1] <- summary(fit)$coef[2,"Estimate"]
-  tmp.matrix[i,2] <- summary(fit)$adj.r.squared
-  tmp.matrix[i,3] <- summary(fit)$coef[2,"Pr(>|t|)"]
-}
-
-# Add column names
-colnames(tmp.matrix) <- c("slope", "R2", "p-value")
-# Add PCB congener names
-rownames(tmp.matrix) <- names()
-
-# Plots
-# Prepare data
-# Remove samples (rows) with total PCBs  = 0
-d.cong.tmp.1 <- d.cong[!(rowSums(d.cong[, c(12:115)],
-                                 na.rm = TRUE)==0),]
-# Change date format
-d.cong.tmp.1$SampleDate <- strptime(x = as.character(d.cong.tmp.1$SampleDate),
-                                    format = "%m/%d/%Y")
-# Get total PCB
-d.cong.tmp.2 <- rowSums(d.cong.tmp.1[, c(12:115)],  na.rm = T)
-# Generate data.frame to be plotted
-d.cong.tmp.2 <- as.matrix(d.cong.tmp.2)
-d.cong.tmp.2 <- cbind(data.frame(d.cong.tmp.1$SampleDate),
-                      d.cong.tmp.2)
-colnames(d.cong.tmp.2) <- c("SampleDate", "tPCB")
-
 # Total PCBs
-ggplot(d.cong.tmp.2, aes(y = tPCB,
-                         x = format(SampleDate,'%Y'))) +
+ggplot(tpcb.tmp.2, aes(y = tPCB,
+                         x = format(date,'%Y'))) +
   xlab("") +
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) +
@@ -295,6 +257,31 @@ ggplot(d.cong.tmp.2, aes(y = tPCB,
 
 # Congeners
 # Format data for selected PCBs
+# Regression per congener
+d.cong.tmi <- subset(d.cong.tmp.1, select = -c(ID:AroclorCongener))
+d.cong.tmi <- subset(d.cong.tmi, select = -c(A1016:A1260))
+log.d.cong.tmi <- log10(d.cong.tmi)
+log.d.cong.tmi[log.d.cong.tmi == -Inf] = NA
+
+# Create matrix
+tmp.matrix <- matrix(nrow = length(d.cong.tmi), ncol = 3)
+date <- data.frame(d.cong.tmp.1$SampleDate)
+
+# Perform regression
+for(i in 1:length(d.cong.tmi)) {
+  fit <- lm(log.d.cong.tmi[,i] ~ time)
+  tmp.matrix[i,1] <- summary(fit)$coef[2,"Estimate"]
+  tmp.matrix[i,2] <- summary(fit)$adj.r.squared
+  tmp.matrix[i,3] <- summary(fit)$coef[2,"Pr(>|t|)"]
+}
+
+# Add column names
+colnames(tmp.matrix) <- c("slope", "R2", "p-value")
+# Add PCB congener names
+rownames(tmp.matrix) <- names()
+
+
+
 # First line needs to be changed for each congener
 # Remove samples with = 0 and NA
 d.congi.tmp <- subset(d.cong,
