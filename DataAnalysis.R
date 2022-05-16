@@ -220,7 +220,6 @@ tpcb.tmp.2 <- rowSums(tpcb.tmp[, c(12:115)],  na.rm = T)
 time.day <- data.frame(as.Date(tpcb.tmp$SampleDate) - as.Date(tpcb.tmp$SampleDate[1]))
 colnames(time.day) <- c("time")
 # Generate data.frame for analysis and plots
-#d.cong.tmp.2 <- as.matrix(d.cong.tmp.2)
 tpcb.tmp.2 <- as.matrix(tpcb.tmp.2)
 tpcb.tmp.2 <- cbind(data.frame(time.day), tpcb.tmp.2, tpcb.tmp$SampleDate)
 colnames(tpcb.tmp.2) <- c("time", "tPCB", "date")
@@ -258,18 +257,17 @@ ggplot(tpcb.tmp.2, aes(y = tPCB,
 # Congeners
 # Format data for selected PCBs
 # Regression per congener
-d.cong.tmi <- subset(d.cong.tmp.1, select = -c(ID:AroclorCongener))
-d.cong.tmi <- subset(d.cong.tmi, select = -c(A1016:A1260))
-log.d.cong.tmi <- log10(d.cong.tmi)
-log.d.cong.tmi[log.d.cong.tmi == -Inf] = NA
+pcbi.tmp <- subset(tpcb.tmp, select = -c(ID:AroclorCongener))
+pcbi.tmp <- subset(pcbi.tmp, select = -c(A1016:A1260))
+log.pcbi.tmp <- log10(pcbi.tmp)
+# Remove infinite values
+log.pcbi.tmp[log.pcbi.tmp == -Inf] = NA
 
 # Create matrix
-tmp.matrix <- matrix(nrow = length(d.cong.tmi), ncol = 3)
-date <- data.frame(d.cong.tmp.1$SampleDate)
+tmp.matrix <- matrix(nrow = length(log.pcbi.tmp), ncol = 3)
 
-# Perform regression
-for(i in 1:length(d.cong.tmi)) {
-  fit <- lm(log.d.cong.tmi[,i] ~ time)
+for(i in 1:length(log.pcbi.tmp)) {
+  fit <- lm(log.pcbi.tmp[,i] ~ tpcb.tmp.2$time)
   tmp.matrix[i,1] <- summary(fit)$coef[2,"Estimate"]
   tmp.matrix[i,2] <- summary(fit)$adj.r.squared
   tmp.matrix[i,3] <- summary(fit)$coef[2,"Pr(>|t|)"]
@@ -280,23 +278,12 @@ colnames(tmp.matrix) <- c("slope", "R2", "p-value")
 # Add PCB congener names
 rownames(tmp.matrix) <- names()
 
-
-
-# First line needs to be changed for each congener
-# Remove samples with = 0 and NA
-d.congi.tmp <- subset(d.cong,
-                      d.cong$PCB4.10 != 0 & d.cong$PCB4.10 != "NA")
-# Change date format
-d.congi.tmp$SampleDate <- strptime(x = as.character(d.congi.tmp$SampleDate),
-                                   format = "%m/%d/%Y")
-# # Generate data.frame to be plotted
-d.congi.tmp.2 <- cbind(data.frame(d.congi.tmp$SampleDate),
-                       d.congi.tmp$PCB4.10)
-colnames(d.congi.tmp.2) <- c("SampleDate", "PCBi")
+# Include sampling dates
+plot.pcbi.tmp <- cbind(tpcb.tmp$SampleDate, pcbi.tmp)
 
 # Plot
-ggplot(d.congi.tmp.2, aes(y = PCBi,
-                          x = format(SampleDate,'%Y'))) +
+ggplot(plot.pcbi.tmp, aes(y = PCB1,
+                          x = format(tpcb.tmp$SampleDate,'%Y'))) +
   xlab("") +
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) +
@@ -317,6 +304,7 @@ ggplot(d.congi.tmp.2, aes(y = PCBi,
   annotation_logticks(sides = "l") +
   geom_smooth(method = lm, se = TRUE, formula = y ~ x,
               aes(group = 1), colour = "#ff6611", size = 0.5)
+
 
 # Plot and analysis per sites ---------------------------------------------
 # (i) Fox River, WI
