@@ -9,6 +9,10 @@ install.packages("tidyverse")
 install.packages("reshape2")
 install.packages("ggplot2")
 install.packages("robustbase")
+install.packages("dplyr")
+install.packages("tibble")
+install.packages("lme4")
+install.packages("MuMIn")
 
 # Load libraries
 library(ggplot2)
@@ -20,6 +24,10 @@ library(scales) # function trans_breaks
 #library(reshape2)
 library(stringr)
 library(robustbase) #function colMedians
+library(dplyr) # %>%
+library(tibble) # function add a column
+library(lme4) # perform lme
+library(MuMIn) # get Rs from lme
 
 # Data in pg/L
 d.cong <- read.csv("WaterDataCongener050322.csv")
@@ -209,13 +217,18 @@ ggplot(d.cong.pcb.sp, aes(x = factor(StateSampled, levels = sites),
 
 # Temporal plots and analysis ---------------------------------------------
 # Analysis
+# Needs to add a individual number for each site name
+# to perform Linear Mixed-Effects Model (LME)
+lmem <- d.cong$SiteName %>% as.factor() %>% as.numeric
+d.cong <- add_column(d.cong, lmem, .after = "AroclorCongener")
+
 # Calculate log10 total PCB per sample
-tpcb.tmp <- d.cong[!(rowSums(d.cong[, c(12:115)],
+tpcb.tmp <- d.cong[!(rowSums(d.cong[, c(13:116)],
                                  na.rm = TRUE)==0),]
 tpcb.tmp$SampleDate <- strptime(x = as.character(tpcb.tmp$SampleDate),
                                     format = "%m/%d/%Y")
 # Get total PCB
-tpcb.tmp.2 <- rowSums(tpcb.tmp[, c(12:115)],  na.rm = T)
+tpcb.tmp.2 <- rowSums(tpcb.tmp[, c(13:116)],  na.rm = T)
 # Get time in days
 time.day <- data.frame(as.Date(tpcb.tmp$SampleDate) - as.Date(tpcb.tmp$SampleDate[1]))
 colnames(time.day) <- c("time")
@@ -230,6 +243,27 @@ summary(fit.tPCB)
 summary(fit.tPCB)$coef[2,"Estimate"]
 summary(fit.tPCB)$coef[2,"Pr(>|t|)"]
 t0.5 <- -log(2)/summary(fit.tPCB)$coef[2,"Estimate"]/365 # half-life tPCB in yr = -log(2)/slope/365
+
+# Perform Linear Mixed-Effects Model (LME)
+time <- tpcb.tmp.2$time
+site <- tpcb.tmp$lmem
+
+lmem.fit.tpcb <- lmer(log10(tpcb.tmp.2$tPCB) ~ 1 + time + (1|site),
+                      REML = FALSE,
+                      control = lmerControl(check.nobs.vs.nlev = "ignore",
+                                            check.nobs.vs.rankZ = "ignore",
+                                            check.nobs.vs.nRE="ignore"))
+
+# R2 no random effect
+as.data.frame(r.squaredGLMM(lmem.fit.tpcb))[1, 'R2m']
+# R2 with random effect
+as.data.frame(r.squaredGLMM(lmem.fit.tpcb))[1, 'R2c']
+# Coefficients
+coef.tPCB <- summary(lmem.fit.tpcb)$coef[ ,1]
+coef.error.tPCB <- summary(lmem.fit.tpcb)$coef[ ,2]
+p.value.tPCB <- summary(lmem.fit.tpcb)$coef[ ,5]
+# Std. Dev. of random effect
+as.data.frame(VarCorr(lmem.fit.tpcb))[1,'sdcor']
 
 # Total PCBs
 ggplot(tpcb.tmp.2, aes(y = tPCB,
