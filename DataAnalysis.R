@@ -310,29 +310,34 @@ ggplot(tpcb.tmp.3, aes(y = tPCB,
 
 # Congeners
 # Format data for selected PCBs
-# Regression per congener
-pcbi.tmp <- subset(tpcb.tmp, select = -c(ID:AroclorCongener))
-pcbi.tmp <- subset(pcbi.tmp, select = -c(A1016:A1260))
-log.pcbi.tmp <- log10(pcbi.tmp)
+# Linear regression per congener
+pcbi.tmp.lr <- subset(tpcb.tmp, select = -c(ID:site.numb))
+pcbi.tmp.lr <- subset(pcbi.tmp.lr, select = -c(A1016:A1260))
+# log10
+log.pcbi.tmp.lr <- log10(pcbi.tmp.lr)
 # Remove infinite values
-log.pcbi.tmp[log.pcbi.tmp == -Inf] = NA
+log.pcbi.tmp.lr[log.pcbi.tmp.lr == -Inf] = NA
 
-# Create matrix
-tmp.matrix <- matrix(nrow = length(log.pcbi.tmp), ncol = 4)
+# Create matrix to store data
+lr.pcbi <- matrix(nrow = length(log.pcbi.tmp.lr), ncol = 7)
 
-for(i in 1:length(log.pcbi.tmp)) {
-  fit <- lm(log.pcbi.tmp[,i] ~ tpcb.tmp.2$time)
-  tmp.matrix[i,1] <- summary(fit)$coef[2,"Estimate"]
-  tmp.matrix[i,2] <- summary(fit)$adj.r.squared
-  tmp.matrix[i,3] <- summary(fit)$coef[2,"Pr(>|t|)"]
-  tmp.matrix[i,4] <- -log(2)/summary(fit)$coef[2,"Estimate"]/365
+for(i in 1:length(log.pcbi.tmp.lr)) {
+  fit <- lm(log.pcbi.tmp.lr[,i] ~ tpcb.tmp.2$time)
+  lr.pcbi[i,1] <- summary(fit)$coef[1,"Estimate"] # intercept
+  lr.pcbi[i,2] <- summary(fit)$coef[2,"Estimate"] # slope
+  lr.pcbi[i,3] <- summary(fit)$coef[2,"Std. Error"] # slope error
+  lr.pcbi[i,4] <- summary(fit)$coef[2,"Pr(>|t|)"] # slope p-value
+  lr.pcbi[i,5] <- -log(2)/lr.pcbi[i,2]/365 # t0.5
+  lr.pcbi[i,6] <- abs(-log(2)/lr.pcbi[i,2]/365)*lr.pcbi[i,3]/abs(lr.pcbi[i,2]) # t0.5 error
+  lr.pcbi[i,7] <- summary(fit)$adj.r.squared # R2 adj
 }
 
 # Add column names
-colnames(tmp.matrix) <- c("slope", "R2", "p-value", "half-life")
+colnames(lr.pcbi) <- c("intercept", "slope", "slope.error",
+                       "p-value", "half-life", "half-life.error", "R2.adj")
 # Add PCB congener names
-congener <- colnames(pcbi.tmp)
-tmp.matrix <- cbind(congener, tmp.matrix)
+congener <- colnames(pcbi.tmp.lr)
+lr.pcbi <- cbind(congener, lr.pcbi)
 
 # Individual PCB plots
 # Include sampling dates
