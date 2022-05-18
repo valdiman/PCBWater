@@ -11,8 +11,10 @@ install.packages("ggplot2")
 install.packages("robustbase")
 install.packages("dplyr")
 install.packages("tibble")
+install.packages("Matrix")
 install.packages("lme4")
 install.packages("MuMIn")
+install.packages("lmerTest")
 
 # Load libraries
 library(ggplot2)
@@ -28,6 +30,7 @@ library(dplyr) # %>%
 library(tibble) # function add a column
 library(lme4) # perform lme
 library(MuMIn) # get Rs from lme
+library(lmerTest) # get the p-value from lme
 
 # Data in pg/L
 d.cong <- read.csv("WaterDataCongener050322.csv")
@@ -219,8 +222,8 @@ ggplot(d.cong.pcb.sp, aes(x = factor(StateSampled, levels = sites),
 # Analysis
 # Needs to add a individual number for each site name
 # to perform Linear Mixed-Effects Model (LME)
-lmem <- d.cong$SiteName %>% as.factor() %>% as.numeric
-d.cong <- add_column(d.cong, lmem, .after = "AroclorCongener")
+site.numb <- d.cong$SiteName %>% as.factor() %>% as.numeric
+d.cong <- add_column(d.cong, site.numb, .after = "AroclorCongener")
 
 # Calculate log10 total PCB per sample
 tpcb.tmp <- d.cong[!(rowSums(d.cong[, c(13:116)],
@@ -237,37 +240,52 @@ tpcb.tmp.2 <- as.matrix(tpcb.tmp.2)
 tpcb.tmp.2 <- cbind(data.frame(time.day), tpcb.tmp.2, tpcb.tmp$SampleDate)
 colnames(tpcb.tmp.2) <- c("time", "tPCB", "date")
 
-# Perform linear correlations
-fit.tPCB <- lm(log10(tPCB) ~ time, data = tpcb.tmp.2)
-summary(fit.tPCB)
-summary(fit.tPCB)$coef[2,"Estimate"]
-summary(fit.tPCB)$coef[2,"Pr(>|t|)"]
-t0.5 <- -log(2)/summary(fit.tPCB)$coef[2,"Estimate"]/365 # half-life tPCB in yr = -log(2)/slope/365
+# Perform linear regression (lr)
+lr.tpcb <- lm(log10(tPCB) ~ time, data = tpcb.tmp.2)
+# See results
+summary(lr.tpcb)
+# Extract intercept and slope (std error and p-value too) values
+inter.lr <- summary(lr.tpcb)$coef[1,"Estimate"]
+slope.lr <- summary(lr.tpcb)$coef[2,"Estimate"]
+slope.lr.error <- summary(lr.tpcb)$coef[2,"Std. Error"]
+slope.lr.pvalue <- summary(lr.tpcb)$coef[2,"Pr(>|t|)"]
+# Calculate half-life tPCB in yr (-log(2)/slope/365)
+t0.5.lr <- -log(2)/slope.lr/365 # half-life tPCB in yr = -log(2)/slope/365
+# Calculate error
+t0.5.lr.error <- abs(t0.5.lr)*slope.lr.error/abs(slope.lr)
+# Extract R2 adjust
+R2.adj <- summary(lr.tpcb)$adj.r.squared
 
 # Perform Linear Mixed-Effects Model (LME)
 time <- tpcb.tmp.2$time
-site <- tpcb.tmp$lmem
+site <- tpcb.tmp$site.numb
 
-lmem.fit.tpcb <- lmer(log10(tpcb.tmp.2$tPCB) ~ 1 + time + (1|site),
+lmem.tpcb <- lmer(log10(tpcb.tmp.2$tPCB) ~ 1 + time + (1|site),
                       REML = FALSE,
                       control = lmerControl(check.nobs.vs.nlev = "ignore",
                                             check.nobs.vs.rankZ = "ignore",
                                             check.nobs.vs.nRE="ignore"))
 
-# R2 no random effect
-as.data.frame(r.squaredGLMM(lmem.fit.tpcb))[1, 'R2m']
-# R2 with random effect
-as.data.frame(r.squaredGLMM(lmem.fit.tpcb))[1, 'R2c']
-# Coefficients
-coef.tPCB <- summary(lmem.fit.tpcb)$coef[ ,1]
-coef.error.tPCB <- summary(lmem.fit.tpcb)$coef[ ,2]
-p.value.tPCB <- summary(lmem.fit.tpcb)$coef[ ,5]
+# See results
+summary(lmem.tpcb)
+# Extract R2 no random effect
+R2.nre <- as.data.frame(r.squaredGLMM(lmem.tpcb))[1, 'R2m']
+# Extract R2 with random effect
+R2.re <- as.data.frame(r.squaredGLMM(lmem.tpcb))[1, 'R2c']
+# Extract intercept and slope (std error and p-value too) values
+inter.lmem <- summary(lmem.tpcb)$coef[1, 1]
+slope.lmem <- summary(lmem.tpcb)$coef[2, 1]
+slope.lmem.error <- summary(lmem.tpcb)$coef[2, 2]
+slope.lmem.pvalue <- summary(lmem.tpcb)$coef[ ,5]
 # Std. Dev. of random effect
-as.data.frame(VarCorr(lmem.fit.tpcb))[1,'sdcor']
+as.data.frame(VarCorr(lmem.tpcb))[1,'sdcor']
+# Half-life in yr
+t0.5.lmem <- -log(2)/slope.lmem/365
+t0.5.lmem.error <- abs(t0.5.lmem)*slope.lmem.error/abs(slope.lmem)
 
-# Total PCBs
-ggplot(tpcb.tmp.2, aes(y = tPCB,
-                         x = format(date,'%Y'))) +
+# Final plot tPCB, including lr and lmem
+ggplot(tpcb.tmp.3, aes(y = tPCB,
+                       x = format(date,'%Y'))) +
   xlab("") +
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) +
@@ -285,9 +303,10 @@ ggplot(tpcb.tmp.2, aes(y = tPCB,
   geom_jitter(position = position_jitter(0.3), cex = 1.2,
               shape = 1, col = "#66ccff") +
   geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
-  annotation_logticks(sides = "l") +
-  geom_smooth(method = lm, se = TRUE, formula = y ~ x,
-              aes(group = 1), colour = "#ff6611", size = 0.5) 
+  geom_abline(intercept = inter.lr,
+              slope = slope.lr*365, color = "#fc8d62", size = 0.8) +
+  geom_abline(intercept = inter.lmem,
+              slope = slope.lmem*365, color = "#7570b3", size = 0.8)
 
 # Congeners
 # Format data for selected PCBs
