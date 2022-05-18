@@ -322,14 +322,14 @@ log.pcbi.tmp.lr[log.pcbi.tmp.lr == -Inf] = NA
 lr.pcbi <- matrix(nrow = length(log.pcbi.tmp.lr), ncol = 7)
 
 for(i in 1:length(log.pcbi.tmp.lr)) {
-  fit <- lm(log.pcbi.tmp.lr[,i] ~ tpcb.tmp.2$time)
-  lr.pcbi[i,1] <- summary(fit)$coef[1,"Estimate"] # intercept
-  lr.pcbi[i,2] <- summary(fit)$coef[2,"Estimate"] # slope
-  lr.pcbi[i,3] <- summary(fit)$coef[2,"Std. Error"] # slope error
-  lr.pcbi[i,4] <- summary(fit)$coef[2,"Pr(>|t|)"] # slope p-value
+  fit.lr <- lm(log.pcbi.tmp.lr[,i] ~ tpcb.tmp.2$time)
+  lr.pcbi[i,1] <- summary(fit.lr)$coef[1,"Estimate"] # intercept
+  lr.pcbi[i,2] <- summary(fit.lr)$coef[2,"Estimate"] # slope
+  lr.pcbi[i,3] <- summary(fit.lr)$coef[2,"Std. Error"] # slope error
+  lr.pcbi[i,4] <- summary(fit.lr)$coef[2,"Pr(>|t|)"] # slope p-value
   lr.pcbi[i,5] <- -log(2)/lr.pcbi[i,2]/365 # t0.5
   lr.pcbi[i,6] <- abs(-log(2)/lr.pcbi[i,2]/365)*lr.pcbi[i,3]/abs(lr.pcbi[i,2]) # t0.5 error
-  lr.pcbi[i,7] <- summary(fit)$adj.r.squared # R2 adj
+  lr.pcbi[i,7] <- summary(fit.lr)$adj.r.squared # R2 adj
 }
 
 # Add column names
@@ -338,6 +338,38 @@ colnames(lr.pcbi) <- c("intercept", "slope", "slope.error",
 # Add PCB congener names
 congener <- colnames(pcbi.tmp.lr)
 lr.pcbi <- cbind(congener, lr.pcbi)
+# Export results
+write.csv(lr.pcbi, file = "linearRegressionPCBi.csv")
+
+# Linear Mixed-effects model per individual congeners
+# Create matrix to store data
+lmem.pcbi <- matrix(nrow = length(log.pcbi.tmp.lr), ncol = 8)
+
+for(i in 1:length(log.pcbi.tmp.lr)) {
+  fit.lmem <- lmer(log.pcbi.tmp.lr[,i] ~ 1 + time + (1|site),
+              REML = FALSE,
+              control = lmerControl(check.nobs.vs.nlev = "ignore",
+                                    check.nobs.vs.rankZ = "ignore",
+                                    check.nobs.vs.nRE="ignore"))
+  lmem.pcbi[i,1] <- summary(fit.lmem)$coef[1, 1] # intercept
+  lmem.pcbi[i,2] <- summary(fit.lmem)$coef[2, 1] # slope
+  lmem.pcbi[i,3] <- summary(fit.lmem)$coef[2,"Std. Error"] # slope error
+  lmem.pcbi[i,4] <- summary(fit.lmem)$coef[2,"Pr(>|t|)"] # slope p-value
+  lmem.pcbi[i,5] <- -log(2)/lmem.pcbi[i,2]/365 # t0.5
+  lmem.pcbi[i,6] <- abs(-log(2)/lmem.pcbi[i,2]/365)*lmem.pcbi[i,3]/abs(lmem.pcbi[i,2]) # t0.5 error
+  #lmem.pcbi[i,7] <- as.data.frame(r.squaredGLMM(lmem.pcbi))[1, 'R2m'] # R2 w/o random effect
+  #lmem.pcbi[i,8] <- as.data.frame(r.squaredGLMM(lmem.pcbi))[1, 'R2c'] # R2 w/ random effect
+}
+
+# Add column names
+colnames(lmem.pcbi) <- c("intercept", "slope", "slope.error",
+                       "p-value", "half-life", "half-life.error", "R2.nre", "R2.re")
+# Add PCB congener names
+congener <- colnames(pcbi.tmp.lr)
+lmem.pcbi <- cbind(congener, lmem.pcbi)
+# Export results
+write.csv(lmem.pcbi, file = "LMEPCBi.csv")
+
 
 # Individual PCB plots
 # Include sampling dates
