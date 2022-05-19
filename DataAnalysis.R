@@ -358,16 +358,17 @@ lmem.pcbi <- formatC(signif(lmem.pcbi, digits = 3))
 congener <- colnames(pcbi.tmp.lr)
 lmem.pcbi <- cbind(congener, lmem.pcbi)
 # Export results
-write.csv(lmem.pcbi, file = "LMEPCBi.csv")
-
+write.csv(lmem.pcbi, file = "LmemPCBi.csv")
 
 # Individual PCB plots
 # Include sampling dates
-plot.pcbi.tmp <- cbind(tpcb.tmp$SampleDate, pcbi.tmp)
+plot.pcbi.tmp <- cbind(tpcb.tmp$date, pcbi.tmp.lr)
+# change date name
+colnames(plot.pcbi.tmp)[colnames(plot.pcbi.tmp) == "tpcb.tmp$date"] <- "date"
 
 # Plot
 ggplot(plot.pcbi.tmp, aes(y = PCB1,
-                          x = format(tpcb.tmp$SampleDate,'%Y'))) +
+                          x = format(date,'%Y'))) +
   xlab("") +
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) +
