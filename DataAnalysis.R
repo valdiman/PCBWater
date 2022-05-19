@@ -297,7 +297,7 @@ ggplot(tpcb.tmp, aes(y = tPCB,
 # Congeners
 # Format data for selected PCBs
 # Linear regression per congener
-pcbi.tmp.lr <- subset(tpcb.tmp, select = -c(ID:site.numb))
+pcbi.tmp.lr <- subset(d.cong.site, select = -c(ID:site.numb))
 pcbi.tmp.lr <- subset(pcbi.tmp.lr, select = -c(A1016:A1260))
 # log10
 log.pcbi.tmp.lr <- log10(pcbi.tmp.lr)
@@ -308,7 +308,7 @@ log.pcbi.tmp.lr[log.pcbi.tmp.lr == -Inf] = NA
 lr.pcbi <- matrix(nrow = length(log.pcbi.tmp.lr), ncol = 7)
 
 for(i in 1:length(log.pcbi.tmp.lr)) {
-  fit.lr <- lm(log.pcbi.tmp.lr[,i] ~ tpcb.tmp.2$time)
+  fit.lr <- lm(log.pcbi.tmp.lr[,i] ~ tpcb.tmp$time)
   lr.pcbi[i,1] <- summary(fit.lr)$coef[1,"Estimate"] # intercept
   lr.pcbi[i,2] <- summary(fit.lr)$coef[2,"Estimate"] # slope
   lr.pcbi[i,3] <- summary(fit.lr)$coef[2,"Std. Error"] # slope error
@@ -321,9 +321,11 @@ for(i in 1:length(log.pcbi.tmp.lr)) {
 # Add column names
 colnames(lr.pcbi) <- c("intercept", "slope", "slope.error",
                        "p-value", "half-life", "half-life.error", "R2.adj")
+# Just 3 significant figures
+lr.pcbi <- formatC(signif(lr.pcbi, digits = 3))
 # Add PCB congener names
 congener <- colnames(pcbi.tmp.lr)
-lr.pcbi <- cbind(congener, lr.pcbi)
+lr.pcbi2 <- cbind(congener, lr.pcbi)
 # Export results
 write.csv(lr.pcbi, file = "linearRegressionPCBi.csv")
 
@@ -337,19 +339,21 @@ for(i in 1:length(log.pcbi.tmp.lr)) {
               control = lmerControl(check.nobs.vs.nlev = "ignore",
                                     check.nobs.vs.rankZ = "ignore",
                                     check.nobs.vs.nRE="ignore"))
-  lmem.pcbi[i,1] <- summary(fit.lmem)$coef[1, 1] # intercept
-  lmem.pcbi[i,2] <- summary(fit.lmem)$coef[2, 1] # slope
+  lmem.pcbi[i,1] <- summary(fit.lmem)$coef[1,1] # intercept
+  lmem.pcbi[i,2] <- summary(fit.lmem)$coef[2,1] # slope
   lmem.pcbi[i,3] <- summary(fit.lmem)$coef[2,"Std. Error"] # slope error
   lmem.pcbi[i,4] <- summary(fit.lmem)$coef[2,"Pr(>|t|)"] # slope p-value
   lmem.pcbi[i,5] <- -log(2)/lmem.pcbi[i,2]/365 # t0.5
   lmem.pcbi[i,6] <- abs(-log(2)/lmem.pcbi[i,2]/365)*lmem.pcbi[i,3]/abs(lmem.pcbi[i,2]) # t0.5 error
-  #lmem.pcbi[i,7] <- as.data.frame(r.squaredGLMM(lmem.pcbi))[1, 'R2m'] # R2 w/o random effect
-  #lmem.pcbi[i,8] <- as.data.frame(r.squaredGLMM(lmem.pcbi))[1, 'R2c'] # R2 w/ random effect
+  lmem.pcbi[i,7] <- as.data.frame(r.squaredGLMM(fit.lmem))[1, 'R2m'] # R2 w/o random effect
+  lmem.pcbi[i,8] <- as.data.frame(r.squaredGLMM(fit.lmem))[1, 'R2c'] # R2 w/ random effect
 }
 
 # Add column names
 colnames(lmem.pcbi) <- c("intercept", "slope", "slope.error",
                        "p-value", "half-life", "half-life.error", "R2.nre", "R2.re")
+# Just 3 significant figures
+lmem.pcbi <- formatC(signif(lmem.pcbi, digits = 3))
 # Add PCB congener names
 congener <- colnames(pcbi.tmp.lr)
 lmem.pcbi <- cbind(congener, lmem.pcbi)
