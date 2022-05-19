@@ -67,11 +67,9 @@ ggplot(d.aroc.2, aes(x = "", y = rowSums(d.aroc.2, na.rm = T))) +
   geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
   annotation_logticks(sides = "l")
 
-# Prepare data for plots with "congener dataset"
-# Remove samples (rows) with total PCBs  = 0
-d.cong.2 <- d.cong[!(rowSums(d.cong[, c(12:115)], na.rm = TRUE)==0),]
+# Prepare data for plots with "congener dataset", including 0s
 # Remove metadata
-d.cong.2 <- subset(d.cong.2, select = -c(ID:AroclorCongener))
+d.cong.2 <- subset(d.cong, select = -c(ID:AroclorCongener))
 # Remove Aroclor data
 d.cong.2 <- subset(d.cong.2, select = -c(A1016:A1260))
 
@@ -113,7 +111,7 @@ ggplot(d.cong.2, aes(x = "", y = rowSums(d.cong.2, na.rm = T))) +
                 labels = trans_format("log10", math_format(10^.x))) +
   theme_classic() +
   theme(aspect.ratio = 14/2) +
-  xlab(expression(bold(Sigma*"PCB (n = 2093)")))+
+  xlab(expression(bold(Sigma*"PCB (n = 2926)")))+
   ylab(expression(bold("Water Concentration 1990 - 2019 (pg/L)"))) +
   theme(axis.text.y = element_text(face = "bold", size = 12),
         axis.title.y = element_text(face = "bold", size = 12)) +
@@ -188,13 +186,8 @@ ggplot(d.cong, aes(x = factor(StateSampled, levels = sites),
   geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
   geom_hline(yintercept = 5600, color = "#cc0000")
 
-# Selected PCB congeners
-# Format data for selected PCBs
-# Remove samples with = 0 and NA
-d.cong.pcb.sp <- subset(d.cong, d.cong$PCB4.10 != 0 & d.cong$PCB4.10 != "NA")
-d.cong.pcb.sp <- subset(d.cong.pcb.sp, select = -c(ID))
-d.cong.pcb.sp <- subset(d.cong.pcb.sp, select = -c(SiteName:AroclorCongener))
-d.cong.pcb.sp <- subset(d.cong.pcb.sp, select = -c(A1016:A1260))
+# Selected StateSampled and individual PCB congener
+d.cong.pcb.sp <- subset(d.cong, select = c(StateSampled, PCB4.10))
 
 # Plot
 ggplot(d.cong.pcb.sp, aes(x = factor(StateSampled, levels = sites),
