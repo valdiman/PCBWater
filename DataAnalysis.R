@@ -216,25 +216,18 @@ ggplot(d.cong.pcb.sp, aes(x = factor(StateSampled, levels = sites),
 # Needs to add a individual number for each site name
 # to perform Linear Mixed-Effects Model (LME)
 site.numb <- d.cong$SiteName %>% as.factor() %>% as.numeric
-d.cong <- add_column(d.cong, site.numb, .after = "AroclorCongener")
-
-# Calculate log10 total PCB per sample
-tpcb.tmp <- d.cong[!(rowSums(d.cong[, c(13:116)],
-                                 na.rm = TRUE)==0),]
-tpcb.tmp$SampleDate <- strptime(x = as.character(tpcb.tmp$SampleDate),
-                                    format = "%m/%d/%Y")
-# Get total PCB
-tpcb.tmp.2 <- rowSums(tpcb.tmp[, c(13:116)],  na.rm = T)
-# Get time in days
-time.day <- data.frame(as.Date(tpcb.tmp$SampleDate) - as.Date(tpcb.tmp$SampleDate[1]))
-colnames(time.day) <- c("time")
+d.cong.site <- add_column(d.cong, site.numb, .after = "AroclorCongener")
+d.cong.site$SampleDate <- as.Date(d.cong.site$SampleDate, format = "%m/%d/%y")
+# Calculate total PCB per sample
+tpcb.tmp <- rowSums(d.cong.site[, c(13:116)],  na.rm = T)
+time.day <- data.frame(as.Date(d.cong.site$SampleDate) - as.Date(d.cong.site$SampleDate[1]))
 # Generate data.frame for analysis and plots
-tpcb.tmp.2 <- as.matrix(tpcb.tmp.2)
-tpcb.tmp.2 <- cbind(data.frame(time.day), tpcb.tmp.2, tpcb.tmp$SampleDate)
-colnames(tpcb.tmp.2) <- c("time", "tPCB", "date")
+tpcb.tmp <- cbind(data.frame(time.day), as.matrix(tpcb.tmp),
+                  d.cong.site$SampleDate)
+colnames(tpcb.tmp) <- c("time", "tPCB", "date")
 
 # Perform linear regression (lr)
-lr.tpcb <- lm(log10(tPCB) ~ time, data = tpcb.tmp.2)
+lr.tpcb <- lm(log10(tPCB + 1) ~ time, data = tpcb.tmp)
 # See results
 summary(lr.tpcb)
 # Extract intercept and slope (std error and p-value too) values
@@ -250,10 +243,10 @@ t0.5.lr.error <- abs(t0.5.lr)*slope.lr.error/abs(slope.lr)
 R2.adj <- summary(lr.tpcb)$adj.r.squared
 
 # Perform Linear Mixed-Effects Model (LME)
-time <- tpcb.tmp.2$time
-site <- tpcb.tmp$site.numb
+time <- tpcb.tmp$time
+site <- d.cong.site$site.numb
 
-lmem.tpcb <- lmer(log10(tpcb.tmp.2$tPCB) ~ 1 + time + (1|site),
+lmem.tpcb <- lmer(log10(tpcb.tmp$tPCB + 1) ~ 1 + time + (1|site),
                       REML = FALSE,
                       control = lmerControl(check.nobs.vs.nlev = "ignore",
                                             check.nobs.vs.rankZ = "ignore",
@@ -277,7 +270,7 @@ t0.5.lmem <- -log(2)/slope.lmem/365
 t0.5.lmem.error <- abs(t0.5.lmem)*slope.lmem.error/abs(slope.lmem)
 
 # Final plot tPCB, including lr and lmem
-ggplot(tpcb.tmp.3, aes(y = tPCB,
+ggplot(tpcb.tmp, aes(y = tPCB,
                        x = format(date,'%Y'))) +
   xlab("") +
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
