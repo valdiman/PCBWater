@@ -33,26 +33,57 @@ library(MuMIn) # get Rs from lme
 library(lmerTest) # get the p-value from lme
 
 # Data in pg/L
-d.cong <- read.csv("WaterDataCongener050322.csv")
-d.aroc <- read.csv("WaterDataCongenerAroclor050322.csv")
+wdc.0 <- read.csv("WaterDataCongenerAroclor062322.csv")
 
 # Summary plots -----------------------------------------------------------
 
 # Box plots with Aroclor dataset
 # Remove samples (rows) with total PCBs  = 0
-d.aroc.2 <- d.aroc[!(rowSums(d.aroc[, c(12:115)], na.rm = TRUE)==0),]
+wdc.1 <- wdc.0[!(rowSums(wdc.0[, c(12:115)], na.rm = TRUE)==0),]
 # Remove metadata
-d.aroc.2 <- subset(d.aroc.2, select = -c(ID:AroclorCongener))
+wdc.1 <- subset(wdc.1, select = -c(ID:AroclorCongener))
 # Remove Aroclor data
-d.aroc.2 <- subset(d.aroc.2, select = -c(A1016:A1260))
+wdc.1 <- subset(wdc.1, select = -c(A1016:A1260))
+
+# Create a frequency detection plot
+wdc.freq <- colSums(! is.na(wdc.1) & (wdc.1 !=0))/nrow(wdc.1)
+wdc.freq <- data.frame(wdc.freq)
+colnames(wdc.freq) <- c("PCB.frequency")
+congener <- row.names(wdc.freq)
+wdc.freq <- cbind(congener, wdc.freq$PCB.frequency)
+colnames(wdc.freq) <- c("congener", "PCB.frequency")
+wdc.freq <- data.frame(wdc.freq)
+wdc.freq$congener <- as.character(wdc.freq$congener)
+wdc.freq$congener <- gsub('\\.', '+', wdc.freq$congener) # replace dot for +
+wdc.freq$PCB.frequency <- as.numeric(as.character(wdc.freq$PCB.frequency))
+wdc.freq$congener <- factor(wdc.freq$congener,
+                            levels = rev(wdc.freq$congener)) # change the order to be plotted.
+
+# Summary statistic of frequency of detection
+summary(wdc.freq$PCB.frequency)
+
+# Frequency detection plot
+ggplot(wdc.freq, aes(x = 100*PCB.frequency, y = congener)) +
+  geom_bar(stat = "identity", fill = "#66ccff") +
+  ylab("") +
+  theme_bw() +
+  xlim(c(0,100)) +
+  theme(aspect.ratio = 20/5) +
+  xlab(expression(bold("Frequency detection (%)"))) +
+  theme(axis.text.x = element_text(face = "bold", size = 9),
+        axis.title.x = element_text(face = "bold", size = 10)) +
+  theme(axis.text.y = element_text(face = "bold", size = 5))
+
+# Summary statistic of total PCBs in pg/L
+summary(rowSums(wdc.1, na.rm = T))
 
 # Total PCBs in 1 box plot
-ggplot(d.aroc.2, aes(x = "", y = rowSums(d.aroc.2, na.rm = T))) + 
+ggplot(wdc.1, aes(x = "", y = rowSums(wdc.1, na.rm = T))) + 
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) +
   theme_classic() +
   theme(aspect.ratio = 14/2) +
-  xlab(expression(bold(Sigma*"PCB (n = 45,146)")))+
+  xlab(expression(bold(Sigma*"PCB (n = 5798)")))+
   ylab(expression(bold("Water Concentration 1990 - 2020 (pg/L)"))) +
   theme(axis.text.y = element_text(face = "bold", size = 12),
         axis.title.y = element_text(face = "bold", size = 12)) +
@@ -67,79 +98,21 @@ ggplot(d.aroc.2, aes(x = "", y = rowSums(d.aroc.2, na.rm = T))) +
   geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
   annotation_logticks(sides = "l")
 
-# Prepare data for plots with "congener dataset", including 0s
-# Remove metadata
-d.cong.2 <- subset(d.cong, select = -c(ID:AroclorCongener))
-# Remove Aroclor data
-d.cong.2 <- subset(d.cong.2, select = -c(A1016:A1260))
-
-# Create a frequency detection plot
-d.cong.freq <- colSums(! is.na(d.cong.2) & (d.cong.2 !=0))/nrow(d.cong.2)
-d.cong.freq <- data.frame(d.cong.freq)
-colnames(d.cong.freq) <- c("PCB.frequency")
-congener <- row.names(d.cong.freq)
-d.cong.freq <- cbind(congener, d.cong.freq$PCB.frequency)
-colnames(d.cong.freq) <- c("congener", "PCB.frequency")
-d.cong.freq <- data.frame(d.cong.freq)
-d.cong.freq$congener <- as.character(d.cong.freq$congener)
-d.cong.freq$congener <- gsub('\\.', '+', d.cong.freq$congener) # replace dot for +
-d.cong.freq$PCB.frequency <- as.numeric(as.character(d.cong.freq$PCB.frequency))
-d.cong.freq$congener <- factor(d.cong.freq$congener,
-                            levels = rev(d.cong.freq$congener)) # change the order to be plotted.
-
-# Summary statistic of frequency of detection
-summary(d.cong.freq$PCB.frequency)
-
-# Frequency detection plot
-ggplot(d.cong.freq, aes(x = 100*PCB.frequency, y = congener)) +
-  geom_bar(stat = "identity", fill = "#66ccff") +
-  ylab("") +
-  theme_bw() +
-  xlim(c(0,100)) +
-  theme(aspect.ratio = 20/5) +
-  xlab(expression(bold("Frequency detection (%)"))) +
-  theme(axis.text.x = element_text(face = "bold", size = 9),
-        axis.title.x = element_text(face = "bold", size = 10)) +
-  theme(axis.text.y = element_text(face = "bold", size = 5))
-
-# Summary statistic of total PCBs
-summary(rowSums(d.cong.2, na.rm = T))
-
-# Total PCBs in 1 box plot
-ggplot(d.cong.2, aes(x = "", y = rowSums(d.cong.2, na.rm = T))) + 
-  scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
-                labels = trans_format("log10", math_format(10^.x))) +
-  theme_classic() +
-  theme(aspect.ratio = 14/2) +
-  xlab(expression(bold(Sigma*"PCB (n = 2926)")))+
-  ylab(expression(bold("Water Concentration 1990 - 2019 (pg/L)"))) +
-  theme(axis.text.y = element_text(face = "bold", size = 12),
-        axis.title.y = element_text(face = "bold", size = 12)) +
-  theme(axis.text.x = element_text(face = "bold", size = 10),
-        axis.title.x = element_text(face = "bold", size = 10,
-                                    angle = 45, hjust = 1.8,
-                                    vjust = 2)) +
-  theme(axis.ticks = element_line(size = 0.8, color = "black"), 
-        axis.ticks.length = unit(0.2, "cm")) +
-  geom_jitter(position = position_jitter(0.3), cex = 1.2,
-              shape = 1, col = "#66ccff") +
-  geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
-  annotation_logticks(sides = "l")
-
 # Individual congeners
-# Summary statistic of individual congeners
-summary(d.cong.2, na.rm = T, zero = T)
+# Summary statistic of individual congeners in pg/L
+summary(wdc.1, na.rm = T, zero = T)
 # Obtain the median for each individual congener
-cong.median <- as.numeric(sub('.*:', '', summary(d.cong.2,
-                                                 na.rm = T, zero = T)[3,]))
+cong.median <- as.numeric(sub('.*:',
+                              '', summary(wdc.1, na.rm = T,
+                                          zero = T)[3,]))
 
 # Individual PCB boxplot
-ggplot(stack(d.cong.2), aes(x = ind, y = values)) +
+ggplot(stack(wdc.1), aes(x = ind, y = values)) +
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) +
   geom_boxplot(width = 0.6, outlier.colour = "#66ccff", col = "#66ccff",
                outlier.shape = 1) +
-  scale_x_discrete(labels = d.cong.freq$congener) + # use to change the "." to "+"
+  scale_x_discrete(labels = wdc.freq$congener) + # use to change the "." to "+"
   theme_bw() +
   theme(aspect.ratio = 25/135) +
   xlab(expression("")) +
@@ -161,12 +134,13 @@ ggplot(stack(d.cong.2), aes(x = ind, y = values)) +
 
 # Spatial plots and analysis ----------------------------------------------
 # Modify x-axis
+# States
 sites <- c("CA", "DE", "ID", "IN", "MA", "MI", "MO",
            "MT", "NM", "NY", "OR", "TX", "WA", "WI")
 
 # Total PCBs
-ggplot(d.cong, aes(x = factor(StateSampled, levels = sites),
-                y = rowSums(d.cong[, c(12:115)],  na.rm = T))) + 
+ggplot(wdc.0, aes(x = factor(StateSampled, levels = sites),
+                y = rowSums(wdc.0[, c(12:115)],  na.rm = T))) + 
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) +
   theme_bw() +
@@ -184,13 +158,13 @@ ggplot(d.cong, aes(x = factor(StateSampled, levels = sites),
   geom_jitter(position = position_jitter(0.3), cex = 1.2,
               shape = 1, col = "#66ccff") +
   geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
-  geom_hline(yintercept = 5600, color = "#cc0000")
+  geom_hline(yintercept = 63, color = "#cc0000") # median from line 78
 
 # Selected StateSampled and individual PCB congener
-d.cong.pcb.sp <- subset(d.cong, select = c(StateSampled, PCB4.10))
+wdc.pcb.sp <- subset(wdc.0, select = c(StateSampled, PCB4.10))
 
 # Plot
-ggplot(d.cong.pcb.sp, aes(x = factor(StateSampled, levels = sites),
+ggplot(wdc.pcb.sp, aes(x = factor(StateSampled, levels = sites),
                    y = PCB4.10)) + 
   scale_y_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) +
@@ -209,27 +183,56 @@ ggplot(d.cong.pcb.sp, aes(x = factor(StateSampled, levels = sites),
   geom_jitter(position = position_jitter(0.3), cex = 1.2,
               shape = 1, col = "#66ccff") +
   geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
-  geom_hline(yintercept = 374.15, color = "#cc0000")
+  geom_hline(yintercept = 0.03, color = "#cc0000") # median 
 
 # Temporal plots and analysis ---------------------------------------------
 # Analysis
 # Needs to add a individual number for each site name
 # to perform Linear Mixed-Effects Model (LME)
-site.numb <- d.cong$SiteName %>% as.factor() %>% as.numeric
-d.cong.site <- add_column(d.cong, site.numb, .after = "AroclorCongener")
-d.cong.site$SampleDate <- as.Date(d.cong.site$SampleDate, format = "%m/%d/%y")
+site.numb <- wdc.0$SiteName %>% as.factor() %>% as.numeric
+wdc.site <- add_column(wdc.0,
+                          site.numb, .after = "AroclorCongener")
+wdc.site$SampleDate <- as.Date(wdc.site$SampleDate,
+                                  format = "%m/%d/%y")
 # Calculate total PCB per sample
-tpcb.tmp <- rowSums(d.cong.site[, c(13:116)],  na.rm = T)
-time.day <- data.frame(as.Date(d.cong.site$SampleDate) - as.Date(d.cong.site$SampleDate[1]))
+tpcb.tmp <- rowSums(wdc.site[, c(13:116)], na.rm = T)
+time.day <- data.frame(as.Date(wdc.site$SampleDate) - min(as.Date(wdc.site$SampleDate)))
 # Generate data.frame for analysis and plots
 tpcb.tmp <- cbind(data.frame(time.day), as.matrix(tpcb.tmp),
-                  d.cong.site$SampleDate)
+                  wdc.site$SampleDate)
 colnames(tpcb.tmp) <- c("time", "tPCB", "date")
 
 # Perform linear regression (lr)
+# (i) + 1
 lr.tpcb <- lm(log10(tPCB + 1) ~ time, data = tpcb.tmp)
 # See results
 summary(lr.tpcb)
+# Look at residuals
+res <- resid(lr.tpcb) # get list of residuals
+# Create Q-Q plot for residuals
+qqnorm(res)
+# Add a straight diagonal line to the plot
+qqline(res)
+# Shapiro test
+shapiro.test(res)
+# One-sample Kolmogorov-Smirnov test
+ks.test(res, 'pnorm')
+
+# (ii) tPCB^(1/4)
+lr.tpcb.2 <- lm(tPCB^(1/4) ~ time, data = tpcb.tmp)
+# See results
+summary(lr.tpcb.2)
+# Look at residuals
+res.2 <- resid(lr.tpcb.2) # get list of residuals
+# Create Q-Q plot for residuals
+qqnorm(res.2)
+# Add a straight diagonal line to the plot
+qqline(res.2)
+# Shapiro test
+shapiro.test(res.2)
+# One-sample Kolmogorov-Smirnov test
+ks.test(res.2, 'pnorm')
+
 # Extract intercept and slope (std error and p-value too) values
 inter.lr <- summary(lr.tpcb)$coef[1,"Estimate"]
 slope.lr <- summary(lr.tpcb)$coef[2,"Estimate"]
@@ -244,9 +247,10 @@ R2.adj <- summary(lr.tpcb)$adj.r.squared
 
 # Perform Linear Mixed-Effects Model (LME)
 time <- tpcb.tmp$time
-site <- d.cong.site$site.numb
+site <- wdc.site$site.numb
 
-lmem.tpcb <- lmer(log10(tpcb.tmp$tPCB + 1) ~ 1 + time + (1|site),
+# (i) + 1
+lmem.tpcb <- lmer(log10(tpcb.tmp$tPCB/4 + 1) ~ 1 + time + (1|site),
                       REML = FALSE,
                       control = lmerControl(check.nobs.vs.nlev = "ignore",
                                             check.nobs.vs.rankZ = "ignore",
@@ -254,6 +258,37 @@ lmem.tpcb <- lmer(log10(tpcb.tmp$tPCB + 1) ~ 1 + time + (1|site),
 
 # See results
 summary(lmem.tpcb)
+# Look at residuals
+res <- resid(lmem.tpcb) # get list of residuals
+# Create Q-Q plot for residuals
+qqnorm(res, main = "log10(C + 1)")
+# Add a straight diagonal line to the plot
+qqline(res)
+# Shapiro test
+shapiro.test(res)
+# One-sample Kolmogorov-Smirnov test
+ks.test(res, 'pnorm')
+
+# (ii) tPCB^(1/4)
+lmem.tpcb.2 <- lmer((tpcb.tmp$tPCB)^(1/4) ~ 1 + time + (1|site),
+                  REML = FALSE,
+                  control = lmerControl(check.nobs.vs.nlev = "ignore",
+                                        check.nobs.vs.rankZ = "ignore",
+                                        check.nobs.vs.nRE="ignore"))
+
+# See results
+summary(lmem.tpcb.2)
+# Look at residuals
+res.2 <- resid(lmem.tpcb.2) # get list of residuals
+# Create Q-Q plot for residuals
+qqnorm(res.2, main = "C^(1/4)")
+# Add a straight diagonal line to the plot
+qqline(res.2)
+# Shapiro test
+shapiro.test(res.2)
+# One-sample Kolmogorov-Smirnov test
+ks.test(res.2, 'pnorm')
+
 # Extract R2 no random effect
 R2.nre <- as.data.frame(r.squaredGLMM(lmem.tpcb))[1, 'R2m']
 # Extract R2 with random effect
@@ -288,7 +323,7 @@ ggplot(tpcb.tmp, aes(y = tPCB,
   annotation_logticks(sides = "l") +
   geom_jitter(position = position_jitter(0.3), cex = 1.2,
               shape = 1, col = "#66ccff") +
-  geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0) +
+  geom_boxplot(width = 0.7, outlier.shape = NA, alpha = 0)
   geom_abline(intercept = inter.lr,
               slope = slope.lr*365, color = "#fc8d62", size = 0.8) +
   geom_abline(intercept = inter.lmem,
@@ -394,7 +429,7 @@ ggplot(plot.pcbi.tmp, aes(y = PCB1,
 # Plot and analysis per sites ---------------------------------------------
 # (i) Fox River, WI
 # Select Fox River only
-Fox.River <- d.cong[str_detect(d.cong$SiteName, 'FoxRiver'),] 
+Fox.River <- d.cong.0[str_detect(d.cong.0$SiteName, 'FoxRiver'),] 
 # Remove samples (rows) with total PCBs  = 0
 Fox.River <- Fox.River[!(rowSums(Fox.River[, c(12:115)], na.rm = TRUE)==0),]
 # Remove metadata
@@ -430,8 +465,9 @@ ggplot(Fox.River.1, aes(x = "", y = rowSums(Fox.River.1, na.rm = T))) +
 # Summary statistic of individual congeners
 summary(Fox.River.1, na.rm = T, zero = T)
 # Obtain the median for each individual congener
-Fox.River.cong.median <- as.numeric(sub('.*:', '', summary(Fox.River.1,
-                                                 na.rm = T, zero = T)[3,]))
+Fox.River.cong.median <- as.numeric(sub('.*:',
+                                        '', summary(Fox.River.1,
+                                                    na.rm = T, zero = T)[3,]))
 
 # Individual PCB boxplot
 ggplot(stack(Fox.River.1), aes(x = ind, y = values)) +
